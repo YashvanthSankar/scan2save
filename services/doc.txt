@@ -1,4 +1,0 @@
-Sri Hari -> Beacon + QR
-Yashvanth -> Backend + DB functions/tables using postgresql and redis
-Pranav -> rest of the backend
-
