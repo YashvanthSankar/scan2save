@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { adminAuth } from '@/lib/firebase'; // Your server-side admin logic
+import { adminAuth } from '@/lib/firebase'; 
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Only run this check for /admin routes
   if (request.nextUrl.pathname.startsWith('/admin')) {
     
