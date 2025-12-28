@@ -18,7 +18,8 @@
     "lucide-react": "^0.562.0",
     "next": "16.0.10",
     "react": "19.2.1",
-    "react-dom": "19.2.1"
+    "react-dom": "19.2.1",
+    "react-qr-code": "^2.0.18"
   },
   "devDependencies": {
     "@prisma/client": "^6.19.1",

@@ -1,15 +1,18 @@
 import * as admin from 'firebase-admin';
 
-// Initialize Firebase Admin SDK
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert({
-      projectId: "scan2save-a64d8",
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      projectId: process.env.FIREBASE_PROJECT_ID, 
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      // Handle Vercel/System environment variable newline differences
+      privateKey: process.env.FIREBASE_PRIVATE_KEY
+        ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+        : undefined,
     }),
   });
 }
 
-export const auth = admin.auth();
+export const adminAuth = admin.auth();
+export const db = admin.firestore(); // Export Firestore if you need it
 export default admin;

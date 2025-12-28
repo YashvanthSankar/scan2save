@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,43 +11,98 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// 1. ROLES for Access Control
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
-  id           String        @id @default(uuid())
-  phoneNumber  String        @unique
-  createdAt    DateTime      @default(now())
+  id           String             @id @default(uuid())
+  phoneNumber  String             @unique
+  role         Role               @default(USER) // New: Default is regular user
+  createdAt    DateTime           @default(now())
+  
   transactions Transaction[]
   feed         PersonalizedFeed[]
   cart         Cart?
 }
 
+// 2. STORE MODEL (The physical shop)
+model Store {
+  id        String   @id @default(uuid())
+  storeId   String   @unique // The human-readable ID (e.g., RELIANCE_MUM_01)
+  name      String
+  location  String   // Address
+  lat       Float    // Geolocation for "Check-in"
+  lng       Float
+  
+  isActive  Boolean  @default(true)
+  qrPayload Json     // Stores the exact JSON structure for the QR
+  
+  products     StoreProduct[] // Inventory specific to this store
+  transactions Transaction[]  // Sales at this store
+  
+  createdAt DateTime @default(now())
+}
+
+// 3. GLOBAL PRODUCT CATALOG (The definition of a product)
 model Product {
-  id          Int     @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   name        String
   category    String
-  price       Decimal
   imageUrl    String?
-  aisle       String?
-  items       TransactionItem[]
+  barcode     String?  @unique // EAN/UPC code
+  
+  // A product can be in many stores (via StoreProduct)
+  storeListings StoreProduct[]
+  
+  // Legacy relations (optional, depending on if offers are global or local)
+  cartItems   CartItem[] 
+  transactionItems TransactionItem[]
   offers      ActiveOffer[]
-  cartItems   CartItem[]
+}
+
+// 4. STORE INVENTORY (Links Product + Store + Price)
+// This enables "Price Comparison" because different stores have different prices.
+model StoreProduct {
+  id        Int     @id @default(autoincrement())
+  storeId   String
+  store     Store   @relation(fields: [storeId], references: [id])
+  
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  
+  price     Decimal // The price at THIS specific store
+  aisle     String? // "Aisle 4" in this specific store
+  inStock   Boolean @default(true)
+
+  @@unique([storeId, productId]) // Prevent duplicate listings
 }
 
 model Transaction {
   id          String            @id @default(uuid())
   userId      String
   user        User              @relation(fields: [userId], references: [id])
+  
+  // Link transaction to a Store
+  storeId     String?
+  store       Store?            @relation(fields: [storeId], references: [id])
+  
   totalAmount Decimal
   createdAt   DateTime          @default(now())
   items       TransactionItem[]
 }
 
 model TransactionItem {
-  id            Int         @id @default(autoincrement())
-  transactionId String
-  transaction   Transaction @relation(fields: [transactionId], references: [id])
-  productId     Int
-  product       Product     @relation(fields: [productId], references: [id])
-  quantity      Int
+  id              Int         @id @default(autoincrement())
+  transactionId   String
+  transaction     Transaction @relation(fields: [transactionId], references: [id])
+  
+  productId       Int
+  product         Product     @relation(fields: [productId], references: [id])
+  
+  quantity        Int
   priceAtPurchase Decimal
 }
 
@@ -58,21 +110,25 @@ model ActiveOffer {
   id                 Int      @id @default(autoincrement())
   productId          Int
   product            Product  @relation(fields: [productId], references: [id])
+  
   title              String
   discountPercentage Int
   isDefault          Boolean  @default(false)
   validUntil         DateTime
+  
   feedItems          PersonalizedFeed[]
 }
 
 model PersonalizedFeed {
-  id             Int         @id @default(autoincrement())
+  id             Int          @id @default(autoincrement())
   userId         String
-  user           User        @relation(fields: [userId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+  
   offerId        Int
-  offer          ActiveOffer @relation(fields: [offerId], references: [id])
+  offer          ActiveOffer  @relation(fields: [offerId], references: [id])
+  
   relevanceScore Decimal
-  generatedAt    DateTime    @default(now())
+  generatedAt    DateTime     @default(now())
 }
 
 model Cart {
@@ -87,7 +143,9 @@ model CartItem {
   id        Int     @id @default(autoincrement())
   cartId    String
   cart      Cart    @relation(fields: [cartId], references: [id])
+  
   productId Int
   product   Product @relation(fields: [productId], references: [id])
+  
   quantity  Int
 }
