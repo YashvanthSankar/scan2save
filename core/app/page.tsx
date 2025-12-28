@@ -3,14 +3,14 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import jsQR from 'jsqr'; // Make sure to npm install jsqr
+import jsQR from 'jsqr'; 
 import { 
   ScanLine, 
   Upload, 
   Camera, 
-  Zap, 
-  CreditCard, 
-  TrendingDown,
+  BrainCircuit, // More tech-focused icon
+  Layers,       // Represents curation/stacking
+  Sparkles,     // Represents premium/value
   Loader2 
 } from 'lucide-react';
 
@@ -50,7 +50,7 @@ export default function LandingPage() {
     fileInputRef.current?.click();
   };
 
-  // --- THE REAL QR PROCESSING LOGIC ---
+  // --- QR PROCESSING LOGIC ---
   const processFile = (file: File) => {
     setIsProcessing(true);
     setUploadError('');
@@ -59,7 +59,6 @@ export default function LandingPage() {
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
-        // Create canvas to read pixels
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
         if (!context) {
@@ -86,13 +85,12 @@ export default function LandingPage() {
     reader.readAsDataURL(file);
   };
 
-  // --- REDIRECT LOGIC (Same as Scanner) ---
+  // --- REDIRECT LOGIC ---
   const handleQRData = (text: string) => {
     try {
       const data = JSON.parse(text);
 
       if (data.app === 'scan2save' && data.sid) {
-        // Check Login Status (Simple Cookie Check)
         const isLoggedIn = document.cookie.includes('session'); 
 
         if (isLoggedIn) {
@@ -102,7 +100,7 @@ export default function LandingPage() {
            router.push(`/login?next=${nextUrl}`);
         }
       } else {
-        setUploadError('Invalid QR. Please upload a Scan2Save code.');
+        setUploadError('Invalid QR. Please upload a valid Scan2Save code.');
         setIsProcessing(false);
       }
     } catch (e) {
@@ -117,7 +115,7 @@ export default function LandingPage() {
       {/* Background Ambience */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute -top-[10%] left-[20%] w-[40%] h-[40%] rounded-full bg-indigo-900/20 blur-[120px]" />
-        <div className="absolute bottom-[10%] right-[10%] w-[30%] h-[30%] rounded-full bg-emerald-900/10 blur-[100px]" />
+        <div className="absolute bottom-[10%] right-[10%] w-[30%] h-[30%] rounded-full bg-blue-900/10 blur-[100px]" />
       </div>
 
       {/* Navigation */}
@@ -134,7 +132,7 @@ export default function LandingPage() {
           href="/login"
           className="text-sm font-medium text-slate-300 hover:text-white transition-colors px-4 py-2 rounded-full hover:bg-slate-800"
         >
-          Login
+          Sign In
         </Link>
       </nav>
 
@@ -143,21 +141,23 @@ export default function LandingPage() {
         
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
           </span>
-          <span className="text-xs font-medium text-slate-400">Instant price comparison active</span>
+          <span className="text-xs font-medium text-slate-400">Next-Gen Recommendation Engine</span>
         </div>
 
+        {/* PROFESSIONAL HEADLINE */}
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white mb-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
-          Stop Overpaying. <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
-            Start Scanning.
+          Precision Savings. <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-400">
+            Intelligently Curated.
           </span>
         </h1>
         
+        {/* GENERALIZED STANDARD DESCRIPTION */}
         <p className="text-lg text-slate-400 max-w-2xl mb-12 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-          Scan any product QR code or upload a receipt. We instantly compare prices across stores to ensure you never miss a deal again.
+          Transform your shopping experience with our adaptive AI. We analyze purchasing patterns to eliminate irrelevant noise, delivering a tailored ecosystem of offers that resonate with your unique lifestyle.
         </p>
 
         {/* Interaction Zone */}
@@ -166,17 +166,17 @@ export default function LandingPage() {
           {/* Option 1: Live Scan */}
           <Link 
             href="/scan"
-            className="group relative flex flex-col items-center justify-center p-10 bg-gradient-to-br from-indigo-600 to-violet-700 rounded-3xl shadow-2xl shadow-indigo-900/20 hover:scale-[1.02] transition-all duration-300 border border-white/10 overflow-hidden"
+            className="group relative flex flex-col items-center justify-center p-10 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl shadow-2xl shadow-indigo-900/20 hover:scale-[1.02] transition-all duration-300 border border-white/10 overflow-hidden"
           >
             <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="h-16 w-16 bg-white/20 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-sm group-hover:bg-white/30 transition-colors">
               <Camera className="w-8 h-8 text-white" />
             </div>
             <h3 className="text-2xl font-bold text-white mb-2">Scan QR Code</h3>
-            <p className="text-indigo-200 text-sm">Use your camera to scan instantly</p>
+            <p className="text-indigo-200 text-sm">Access your personalized dashboard</p>
           </Link>
 
-          {/* Option 2: Upload (NOW WORKING) */}
+          {/* Option 2: Upload */}
           <div 
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -195,15 +195,15 @@ export default function LandingPage() {
             {isProcessing ? (
               <div className="flex flex-col items-center">
                 <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
-                <p className="text-slate-300 font-medium">Reading QR...</p>
+                <p className="text-slate-300 font-medium">Analyzing Data...</p>
               </div>
             ) : (
               <>
                 <div className="h-16 w-16 bg-slate-800 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-slate-700 transition-colors">
                   <Upload className="w-8 h-8 text-slate-400 group-hover:text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-200 mb-2">Upload Image</h3>
-                <p className="text-slate-500 text-sm">Or drag and drop a screenshot here</p>
+                <h3 className="text-2xl font-bold text-slate-200 mb-2">Upload Receipt</h3>
+                <p className="text-slate-500 text-sm">Enhance your recommendation profile</p>
                 {uploadError && (
                     <p className="text-red-400 text-xs mt-3 bg-red-900/20 px-2 py-1 rounded border border-red-500/20">
                         {uploadError}
@@ -214,23 +214,23 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Feature Highlights */}
+        {/* PROFESSIONAL FEATURE GRID */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-24 w-full">
           {[
             { 
-              icon: Zap, 
-              title: "Instant Compare", 
-              desc: "Get real-time price comparisons from 50+ local stores." 
+              icon: BrainCircuit, 
+              title: "Predictive Analytics", 
+              desc: "Our algorithms leverage historical data to forecast your needs, ensuring high-relevance recommendations." 
             },
             { 
-              icon: TrendingDown, 
-              title: "Price History", 
-              desc: "See if the 'discount' is real or just a marketing trick." 
+              icon: Layers, 
+              title: "Curated Filtering", 
+              desc: "We apply rigorous filtering layers to screen out generic ads, ensuring a premium, noise-free experience." 
             },
             { 
-              icon: CreditCard, 
-              title: "Auto-Cashback", 
-              desc: "Link your card and get automatic rewards on scanning." 
+              icon: Sparkles, 
+              title: "Value Optimization", 
+              desc: "Unlock exclusive rewards and pricing tiers designed specifically for your spending segments." 
             }
           ].map((feature, i) => (
             <div key={i} className="flex flex-col items-center md:items-start text-center md:text-left p-6 rounded-2xl hover:bg-white/5 transition-colors">
@@ -244,7 +244,10 @@ export default function LandingPage() {
       
       {/* Footer */}
       <footer className="border-t border-slate-800 py-8 text-center text-slate-600 text-sm">
-        <p>&copy; {new Date().getFullYear()} Scan2Save. Making shopping smarter.</p>
+        <p>&copy; {new Date().getFullYear()} Scan2Save. Intelligent Retail Solutions.</p>
+        <Link href="/get-qrs" className="text-xs text-slate-800 hover:text-slate-500 mt-2 block">
+          [Dev: Get QR Codes]
+        </Link>
       </footer>
     </div>
   );
