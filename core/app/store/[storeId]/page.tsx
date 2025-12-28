@@ -3,14 +3,19 @@ import { notFound } from 'next/navigation';
 import { MapPin, Star } from 'lucide-react';
 import Link from 'next/link';
 
-export default function StoreFront({ params }: { params: { storeId: string } }) {
-  // 1. Find the Store
-  const store = STORES.find((s) => s.id === params.storeId);
+// 1. Change type to Promise
+// 2. Make component 'async'
+export default async function StoreFront({ params }: { params: Promise<{ storeId: string }> }) {
+  
+  // 3. Await the params before using them
+  const { storeId } = await params;
+
+  const store = STORES.find((s) => s.id === storeId);
   
   if (!store) return notFound();
 
-  // 2. Filter Products for this Store
-  const storeProducts = PRODUCTS.filter((p) => p.storeId === params.storeId);
+  // Filter Products for this Store using the unwrapped storeId
+  const storeProducts = PRODUCTS.filter((p) => p.storeId === storeId);
 
   return (
     <div className="min-h-screen bg-black text-white pb-20">

@@ -1,10 +1,15 @@
-import { PRODUCTS, STORES } from '@/lib/data'; // Make sure to import STORES too
+import { PRODUCTS, STORES } from '@/lib/data'; 
 import { notFound } from 'next/navigation';
 import { ShoppingCart, ArrowLeft, MapPin, Tag } from 'lucide-react';
 import Link from 'next/link';
 
-export default function ProductPage({ params }: { params: { id: string } }) {
-  const product = PRODUCTS.find((p) => p.id === params.id);
+// 1. Async Component + Promise Type
+export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+  
+  // 2. Await params
+  const { id } = await params;
+
+  const product = PRODUCTS.find((p) => p.id === id);
 
   if (!product) {
     return notFound();
@@ -17,13 +22,14 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   const discount = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
 
   return (
+    // ... (The rest of your JSX remains exactly the same)
     <div className="min-h-screen bg-black text-white p-8">
       <Link href="/" className="flex items-center text-gray-400 hover:text-white mb-8">
         <ArrowLeft className="w-4 h-4 mr-2" /> Back to Store
       </Link>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto">
-        {/* Image Section */}
+      
+      {/* ... keeping the rest of the UI the same ... */}
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto">
         <div className="rounded-2xl overflow-hidden bg-gray-900 h-[500px] border border-gray-800">
           <img 
             src={product.image} 
@@ -32,7 +38,6 @@ export default function ProductPage({ params }: { params: { id: string } }) {
           />
         </div>
 
-        {/* Details Section */}
         <div className="flex flex-col justify-center space-y-6">
           <div>
             <span className="text-blue-400 text-sm font-medium tracking-wider uppercase bg-blue-500/10 px-3 py-1 rounded-full">
@@ -45,7 +50,6 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             {product.description}
           </p>
 
-          {/* Pricing Section */}
           <div className="space-y-1">
             <div className="flex items-center gap-3">
                <span className="text-3xl font-bold text-white">₹{product.price.toLocaleString()}</span>
@@ -57,7 +61,6 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             <p className="text-xs text-gray-500">Inclusive of all taxes</p>
           </div>
 
-          {/* Location Info */}
           <div className="bg-gray-900/50 p-4 rounded-xl border border-gray-800 flex flex-col gap-2">
             <div className="flex items-start gap-2 text-sm text-gray-300">
                 <MapPin className="w-4 h-4 text-red-400 mt-1" />
