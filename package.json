@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@yudiel/react-qr-scanner": "^2.5.0",
+    "nanoid": "^5.1.6"
+  }
+}

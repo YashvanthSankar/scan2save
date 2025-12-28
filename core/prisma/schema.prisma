@@ -92,6 +92,12 @@ model Transaction {
   totalAmount Decimal
   createdAt   DateTime          @default(now())
   items       TransactionItem[]
+  
+  // NEW FIELDS FOR SCAN & GO
+  isPaid      Boolean           @default(false) // True after payment gateway success
+  gatePassToken String?         @unique         // The secret code inside the Exit QR
+  isVerified  Boolean           @default(false) // True after Guard scans it
+  verifiedAt  DateTime?                         // When did they leave?
 }
 
 model TransactionItem {
