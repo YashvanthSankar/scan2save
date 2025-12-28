@@ -3,8 +3,9 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import QRCode from 'react-qr-code'; 
 import { CheckCircle, Home } from 'lucide-react';
+import { Suspense } from 'react';
 
-export default function ExitPass() {
+function SuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
@@ -52,5 +53,13 @@ export default function ExitPass() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-emerald-950 flex items-center justify-center"><div className="text-white">Loading...</div></div>}>
+      <SuccessContent />
+    </Suspense>
   );
 }

@@ -107,7 +107,8 @@ export default function ScanPage() {
         {!loading && !isProcessingFile && (
           <Scanner 
             onScan={(result) => handleScan(result[0].rawValue)}
-            components={{ audio: false, torch: true }}
+            components={{ torch: true }}
+            sound={false}
             styles={{ container: { height: '100%', width: '100%' }, video: { objectFit: 'cover' } }}
           />
         )}

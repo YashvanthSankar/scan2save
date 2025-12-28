@@ -12,6 +12,7 @@
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "dependencies": {
+    "@yudiel/react-qr-scanner": "^2.5.0",
     "firebase": "^12.7.0",
     "firebase-admin": "^13.6.0",
     "firebase-auth": "^0.1.2",

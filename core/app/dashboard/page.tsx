@@ -98,23 +98,6 @@ export default function UserDashboard() {
           </div>
         </Link>
 
-        {/* Secondary: Upload Receipt */}
-        {/* <Link 
-          href="/upload" 
-          className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between hover:bg-slate-800 transition-colors group"
-        >
-          <div className="flex items-center gap-4">
-            <div className="bg-emerald-500/10 p-3 rounded-xl text-emerald-500 group-hover:bg-emerald-500/20 transition-colors">
-              <UploadCloud className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="font-bold text-white">Upload Receipt</h3>
-              <p className="text-slate-500 text-xs">Digitize bills & earn points</p>
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-white transition-colors" />
-        </Link> */}
-
       </div>
 
       {/* 3. Recent Activity */}
