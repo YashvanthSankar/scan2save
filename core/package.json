@@ -12,6 +12,10 @@
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "dependencies": {
+    "firebase": "^12.7.0",
+    "firebase-admin": "^13.6.0",
+    "firebase-auth": "^0.1.2",
+    "lucide-react": "^0.562.0",
     "next": "16.0.10",
     "react": "19.2.1",
     "react-dom": "19.2.1"
