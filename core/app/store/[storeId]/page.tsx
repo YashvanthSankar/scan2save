@@ -1,12 +1,10 @@
-import { STORES, PRODUCTS } from '@/lib/data';
 import { notFound } from 'next/navigation';
-import { 
-  MapPin, 
-  Star, 
-  Clock, 
-  ShieldCheck, 
-  Search, 
-  Filter, 
+import {
+  MapPin,
+  Star,
+  Clock,
+  ShieldCheck,
+  Search,
   ArrowRight,
   Tag,
   Map,
@@ -14,42 +12,50 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-// Define Props for Next.js 15 Page
 interface StorePageProps {
   params: Promise<{ storeId: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function StoreFront({ params, searchParams }: StorePageProps) {
-  
-  // 1. Await params & searchParams (Next.js 15 requirement)
-  const { storeId } = await params;
-  const { q, category } = await searchParams; // Get query (q) and category from URL
+async function getStoreData(storeId: string) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/stores/${storeId}`, {
+    cache: 'no-store'
+  });
 
-  // 2. Fetch Store Data
-  const store = STORES.find((s) => s.id === storeId);
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.store;
+}
+
+async function getStoreProducts(storeId: string, category?: string, query?: string) {
+  const params = new URLSearchParams();
+  if (category) params.set('category', category);
+  if (query) params.set('q', query);
+
+  const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/stores/${storeId}/products${params.toString() ? '?' + params.toString() : ''}`;
+
+  const res = await fetch(url, { cache: 'no-store' });
+
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.products || [];
+}
+
+export default async function StoreFront({ params, searchParams }: StorePageProps) {
+  const { storeId } = await params;
+  const { q, category } = await searchParams;
+
+  const store = await getStoreData(storeId);
   if (!store) return notFound();
 
-  // 3. Filter Products Logic
-  let storeProducts = PRODUCTS.filter((p) => p.storeId === storeId);
+  const storeProducts = await getStoreProducts(
+    storeId,
+    typeof category === 'string' ? category : undefined,
+    typeof q === 'string' ? q : undefined
+  );
 
-  // Filter by Category
-  if (category && typeof category === 'string') {
-    storeProducts = storeProducts.filter(p => p.category === category);
-  }
-
-  // Filter by Search Query
-  if (q && typeof q === 'string') {
-    const query = q.toLowerCase();
-    storeProducts = storeProducts.filter(p => 
-      p.name.toLowerCase().includes(query) || 
-      p.description.toLowerCase().includes(query)
-    );
-  }
-
-  // 4. Extract unique categories for filter pills
-  const allStoreProducts = PRODUCTS.filter((p) => p.storeId === storeId);
-  const categories = Array.from(new Set(allStoreProducts.map(p => p.category)));
+  const allProducts = await getStoreProducts(storeId);
+  const categories: string[] = Array.from(new Set(allProducts.map((p: any) => p.category)));
 
   return (
     <div className="min-h-screen bg-slate-950 text-white selection:bg-indigo-500/30 font-sans pb-20">
@@ -77,19 +83,19 @@ export default async function StoreFront({ params, searchParams }: StorePageProp
              </div>
 
              <h1 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight drop-shadow-lg">{store.name}</h1>
-             
+
              <div className="flex flex-wrap items-center gap-6 text-sm md:text-base text-slate-300">
                 <div className="flex items-center text-white bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm border border-white/5">
-                    <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 mr-2" /> 
-                    <span className="font-bold mr-1">{store.rating}</span> 
+                    <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 mr-2" />
+                    <span className="font-bold mr-1">{store.rating}</span>
                     <span className="text-slate-400 text-xs ml-1">(1.2k)</span>
                 </div>
                 <div className="flex items-center">
-                    <MapPin className="w-5 h-5 text-indigo-400 mr-2" /> 
+                    <MapPin className="w-5 h-5 text-blue-400 mr-2" />
                     {store.location}
                 </div>
                 <div className="flex items-center text-emerald-400">
-                    <Clock className="w-5 h-5 mr-2" /> 
+                    <Clock className="w-5 h-5 mr-2" />
                     Open Now • Closes 10 PM
                 </div>
              </div>
@@ -104,24 +110,24 @@ export default async function StoreFront({ params, searchParams }: StorePageProp
             {/* Functional Categories Scroll */}
             <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
                 {/* 'All Items' clears the category param */}
-                <Link 
-                    href={`/stores/${storeId}${q ? `?q=${q}` : ''}`}
+                <Link
+                    href={`/store/${storeId}${q ? `?q=${q}` : ''}`}
                     className={`px-4 py-2 rounded-full font-bold text-sm whitespace-nowrap transition-colors border ${
-                        !category 
-                        ? 'bg-white text-black border-white' 
+                        !category
+                        ? 'bg-white text-black border-white'
                         : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white hover:border-slate-600'
                     }`}
                 >
                     All Items
                 </Link>
-                
-                {categories.map(cat => (
-                    <Link 
-                        key={cat} 
-                        href={`/stores/${storeId}?category=${encodeURIComponent(cat)}${q ? `&q=${q}` : ''}`}
+
+                {categories.map((cat: string) => (
+                    <Link
+                        key={cat}
+                        href={`/store/${storeId}?category=${encodeURIComponent(cat)}${q ? `&q=${q}` : ''}`}
                         className={`px-4 py-2 rounded-full border text-sm whitespace-nowrap transition-colors ${
                             category === cat
-                            ? 'bg-indigo-600 border-indigo-500 text-white'
+                            ? 'bg-blue-600 border-blue-500 text-white'
                             : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-slate-600'
                         }`}
                     >
@@ -131,16 +137,15 @@ export default async function StoreFront({ params, searchParams }: StorePageProp
             </div>
 
             {/* Functional Search Form */}
-            <form action={`/stores/${storeId}`} className="relative w-full md:w-64 group">
-                <Search className="absolute left-3 top-3 w-4 h-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors pointer-events-none" />
-                <input 
+            <form action={`/store/${storeId}`} className="relative w-full md:w-64 group">
+                <Search className="absolute left-3 top-3 w-4 h-4 text-slate-500 group-focus-within:text-blue-400 transition-colors pointer-events-none" />
+                <input
                     name="q"
                     defaultValue={typeof q === 'string' ? q : ''}
-                    type="text" 
-                    placeholder="Search products..." 
-                    className="w-full bg-slate-900 border border-slate-800 rounded-full py-2.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all placeholder:text-slate-600"
+                    type="text"
+                    placeholder="Search products..."
+                    className="w-full bg-slate-900 border border-slate-800 rounded-full py-2.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600"
                 />
-                {/* Hidden input to preserve category when searching */}
                 {category && <input type="hidden" name="category" value={category as string} />}
             </form>
         </div>
@@ -150,25 +155,24 @@ export default async function StoreFront({ params, searchParams }: StorePageProp
       <div className="container mx-auto px-4 mt-8">
         <div className="flex flex-wrap items-center justify-between mb-6 gap-4">
             <h2 className="text-xl font-bold flex items-center gap-2">
-                <Tag className="w-5 h-5 text-indigo-400" />
+                <Tag className="w-5 h-5 text-blue-400" />
                 Inventory <span className="text-slate-500 text-sm font-normal">({storeProducts.length} items found)</span>
             </h2>
-            
-            {/* Active Filters Display */}
+
             {(q || category) && (
                 <div className="flex items-center gap-2">
                     <span className="text-xs text-slate-500 uppercase tracking-wider font-bold">Filters:</span>
                     {category && (
-                        <span className="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded border border-indigo-500/30 flex items-center gap-1">
+                        <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded border border-blue-500/30 flex items-center gap-1">
                             {category}
                         </span>
                     )}
                     {q && (
-                        <span className="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded border border-indigo-500/30 flex items-center gap-1">
+                        <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded border border-blue-500/30 flex items-center gap-1">
                             "{q}"
                         </span>
                     )}
-                    <Link href={`/stores/${storeId}`} className="text-xs text-slate-400 hover:text-white flex items-center gap-1 ml-2">
+                    <Link href={`/store/${storeId}`} className="text-xs text-slate-400 hover:text-white flex items-center gap-1 ml-2">
                         <X className="w-3 h-3" /> Clear
                     </Link>
                 </div>
@@ -180,30 +184,27 @@ export default async function StoreFront({ params, searchParams }: StorePageProp
                 <Search className="w-12 h-12 text-slate-600 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-white mb-2">No products found</h3>
                 <p className="text-slate-400">Try adjusting your search or filters.</p>
-                <Link href={`/stores/${storeId}`} className="mt-6 inline-block bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded-full text-sm font-medium transition-colors">
+                <Link href={`/store/${storeId}`} className="mt-6 inline-block bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded-full text-sm font-medium transition-colors">
                     View All Products
                 </Link>
             </div>
         ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {storeProducts.map((product) => {
-                // Calculate Savings
+            {storeProducts.map((product: any) => {
                 const savings = product.originalPrice - product.price;
                 const discountPercent = Math.round((savings / product.originalPrice) * 100);
 
                 return (
-                <Link key={product.id} href={`/products/${product.id}`} className="group block h-full">
-                <div className="bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300 relative h-full flex flex-col">
-                    
-                    {/* Image Area */}
+                <Link key={product.id} href={`/product/${product.id}`} className="group block h-full">
+                <div className="bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 relative h-full flex flex-col">
+
                     <div className="aspect-[4/3] bg-slate-800 overflow-hidden relative">
-                    <img 
-                        src={product.image} 
-                        alt={product.name} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                    <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     />
-                    
-                    {/* Floating Badge: Discount */}
+
                     {discountPercent > 0 && (
                         <div className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg flex items-center gap-1">
                             <Tag className="w-3 h-3" />
@@ -211,18 +212,15 @@ export default async function StoreFront({ params, searchParams }: StorePageProp
                         </div>
                     )}
 
-                    {/* Floating Badge: Category */}
                     <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md text-white text-[10px] font-medium px-2 py-1 rounded border border-white/10">
                         {product.category}
                     </div>
                     </div>
-                    
-                    {/* Details Area */}
+
                     <div className="p-5 flex flex-col flex-grow">
-                    <h3 className="font-bold text-lg mb-1 leading-tight group-hover:text-indigo-400 transition-colors line-clamp-1">{product.name}</h3>
+                    <h3 className="font-bold text-lg mb-1 leading-tight group-hover:text-blue-400 transition-colors line-clamp-1">{product.name}</h3>
                     <p className="text-slate-400 text-xs line-clamp-2 mb-4 h-8">{product.description}</p>
-                    
-                    {/* Physical Location Helper */}
+
                     <div className="mb-4 flex items-center gap-2 text-xs text-slate-500 bg-slate-950 p-2 rounded-lg border border-slate-800/50">
                         <Map className="w-3 h-3 text-emerald-400" />
                         <span>Aisle: <span className="text-slate-300 font-medium">{product.aisle || "General"}</span></span>
