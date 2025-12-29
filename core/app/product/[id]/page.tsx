@@ -1,88 +1,108 @@
-import { PRODUCTS, STORES } from '@/lib/data'; 
+import { PRODUCTS, STORES } from '@/lib/data';
 import { notFound } from 'next/navigation';
-import { ShoppingCart, ArrowLeft, MapPin, Tag } from 'lucide-react';
+import { 
+  ShoppingCart, 
+  ArrowLeft, 
+  MapPin, 
+  Tag, 
+  ShieldCheck, 
+  Star, 
+  Truck,
+  Check,
+  Map,
+  Store
+} from 'lucide-react';
 import Link from 'next/link';
 
-// 1. Async Component + Promise Type
+// 1. Define params as a Promise for Next.js 15
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   
-  // 2. Await params
+  // 2. Await the params to get the ID
   const { id } = await params;
 
+  // 3. Find Product
   const product = PRODUCTS.find((p) => p.id === id);
-
   if (!product) {
     return notFound();
   }
 
-  // Find the store name for this product
+  // 4. Find the associated Store
   const store = STORES.find(s => s.id === product.storeId);
 
-  // Calculate Discount Percentage
+  // Calculate Discount
   const discount = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
 
   return (
-    // ... (The rest of your JSX remains exactly the same)
-    <div className="min-h-screen bg-black text-white p-8">
-      <Link href="/" className="flex items-center text-gray-400 hover:text-white mb-8">
-        <ArrowLeft className="w-4 h-4 mr-2" /> Back to Store
-      </Link>
+    <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-indigo-500/30 pb-20">
       
-      {/* ... keeping the rest of the UI the same ... */}
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto">
-        <div className="rounded-2xl overflow-hidden bg-gray-900 h-[500px] border border-gray-800">
-          <img 
-            src={product.image} 
-            alt={product.name} 
-            className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-          />
+      {/* Navigation Bar */}
+      <nav className="border-b border-slate-800 bg-slate-950/50 backdrop-blur-xl sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <Link href={`/stores/${product.storeId}`} className="flex items-center text-slate-400 hover:text-white transition-colors group w-fit">
+            <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+            <span className="font-medium">Back to {store?.name || "Store"}</span>
+          </Link>
         </div>
+      </nav>
 
-        <div className="flex flex-col justify-center space-y-6">
-          <div>
-            <span className="text-blue-400 text-sm font-medium tracking-wider uppercase bg-blue-500/10 px-3 py-1 rounded-full">
-              {product.category}
-            </span>
-            <h1 className="text-4xl font-bold mt-4">{product.name}</h1>
-          </div>
+      <div className="container mx-auto px-4 py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 max-w-7xl mx-auto">
           
-          <p className="text-gray-400 text-lg leading-relaxed">
-            {product.description}
-          </p>
-
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-               <span className="text-3xl font-bold text-white">₹{product.price.toLocaleString()}</span>
-               <span className="text-xl text-gray-500 line-through">₹{product.originalPrice.toLocaleString()}</span>
-               <span className="text-green-400 text-sm font-bold px-2 py-1 bg-green-500/10 rounded">
-                 {discount}% OFF
-               </span>
-            </div>
-            <p className="text-xs text-gray-500">Inclusive of all taxes</p>
-          </div>
-
-          <div className="bg-gray-900/50 p-4 rounded-xl border border-gray-800 flex flex-col gap-2">
-            <div className="flex items-start gap-2 text-sm text-gray-300">
-                <MapPin className="w-4 h-4 text-red-400 mt-1" />
-                <div>
-                    <span className="block font-semibold text-white">Available at: {store?.name}</span>
-                    <span className="block text-gray-500">{store?.location}</span>
+          {/* --- LEFT COLUMN: IMAGE --- */}
+          <div className="space-y-6">
+            <div className="aspect-square bg-slate-900 rounded-3xl overflow-hidden border border-slate-800 relative group">
+                <img 
+                    src={product.image} 
+                    alt={product.name} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                />
+                
+                {/* Floating Badges */}
+                <div className="absolute top-4 left-4 flex flex-col gap-2">
+                    {discount > 0 && (
+                        <span className="bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg flex items-center gap-1 w-fit">
+                            <Tag className="w-3 h-3" /> {discount}% OFF
+                        </span>
+                    )}
+                    <span className="bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-white/10 w-fit">
+                        {product.category}
+                    </span>
                 </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-300 border-t border-gray-800 pt-2 mt-1">
-                <Tag className="w-4 h-4 text-yellow-400" />
-                <span>Exact Location: <span className="text-white font-medium">{product.aisle}</span></span>
+
+            {/* Trust Badges */}
+            <div className="grid grid-cols-3 gap-4">
+                {[
+                    { icon: ShieldCheck, label: "Original", sub: "100% Authentic" },
+                    { icon: Truck, label: "Fast Delivery", sub: "Within 24 Hours" },
+                    { icon: Check, label: "Verified", sub: "Quality Check" },
+                ].map((badge, i) => (
+                    <div key={i} className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
+                        <badge.icon className="w-6 h-6 text-indigo-400 mx-auto mb-2" />
+                        <div className="font-bold text-sm text-white">{badge.label}</div>
+                        <div className="text-[10px] text-slate-500 uppercase tracking-wider">{badge.sub}</div>
+                    </div>
+                ))}
             </div>
           </div>
 
-          <div className="pt-4">
-            <button className="w-full md:w-auto bg-white text-black px-8 py-4 rounded-full font-bold flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors">
-              <ShoppingCart className="w-5 h-5" />
-              Add to Cart
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+          {/* --- RIGHT COLUMN: DETAILS --- */}
+          <div className="flex flex-col justify-center">
+            
+            <div className="mb-2 flex items-center gap-2">
+                <Link href={`/stores/${store?.id}`} className="text-indigo-400 hover:text-indigo-300 text-sm font-bold flex items-center gap-1">
+                    <Store className="w-4 h-4" />
+                    {store?.name}
+                </Link>
+                <span className="text-slate-600">•</span>
+                <span className="text-slate-500 text-sm flex items-center gap-1">
+                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" /> 4.8 (320 reviews)
+                </span>
+            </div>
+
+            <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">{product.name}</h1>
+
+            {/* Price Block */}
+            <div className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl mb-8">
+                <div className="flex items-end gap-3 mb-2">
+                    <span className="text-4xl font-bold
