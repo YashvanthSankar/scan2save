@@ -1,123 +1,152 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
+  ArrowRight,
+  Sparkles,
   ScanLine,
-  Camera,
-  BrainCircuit, // More tech-focused icon
-  Layers,       // Represents curation/stacking
-  Sparkles,     // Represents premium/value
+  ShieldCheck,
+  Zap,
+  Globe,
+  Smartphone
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle'; // Kept locally if needed, but navigation link handles flow
+
+// Custom background styles (could be in globals.css, but inline for encapsulation)
+
 
 export default function LandingPage() {
-  const router = useRouter();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white selection:bg-indigo-500/30 font-sans overflow-hidden relative">
-      
-      {/* Background Ambience */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute -top-[10%] left-[20%] w-[40%] h-[40%] rounded-full bg-indigo-900/20 blur-[120px]" />
-        <div className="absolute bottom-[10%] right-[10%] w-[30%] h-[30%] rounded-full bg-blue-900/10 blur-[100px]" />
-      </div>
+    <div className="min-h-screen text-foreground font-sans selection:bg-primary/30 overflow-x-hidden relative">
 
-      {/* Navigation */}
-      <nav className="relative z-50 flex items-center justify-between px-6 py-6 max-w-7xl mx-auto">
-        <div className="flex items-center gap-2">
-          <div className="bg-indigo-600/20 p-2 rounded-lg border border-indigo-500/30">
-            <ScanLine className="w-6 h-6 text-indigo-400" />
+      {/* 0. BACKGROUND - Global in layout.tsx */}
+
+      {/* 1. NAVIGATION */}
+      <nav className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 w-[95%] sm:w-[90%] max-w-5xl rounded-full border ${scrolled ? 'bg-background/80 backdrop-blur-xl border-border py-3 shadow-2xl' : 'bg-transparent border-transparent py-4'}`}>
+        <div className="px-6 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+              <ScanLine className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-lg font-bold tracking-tight">Scan2Save</span>
           </div>
-          <span className="text-xl font-bold tracking-tight">
-            Scan2<span className="text-indigo-400">Save</span>
-          </span>
+
+          {/* Spacer */}
+          <div className="hidden md:block" />
+
+          <div className="flex items-center gap-4">
+            <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors hidden sm:block">
+              Log in
+            </Link>
+            <Link
+              href="/login"
+              className="bg-primary text-primary-foreground px-5 py-2.5 rounded-full text-sm font-bold hover:opacity-90 transition-colors shadow-lg shadow-primary/25"
+            >
+              Get Started
+            </Link>
+          </div>
         </div>
-        <Link 
-          href="/login"
-          className="text-sm font-medium text-slate-300 hover:text-white transition-colors px-4 py-2 rounded-full hover:bg-slate-800"
-        >
-          Sign In
-        </Link>
       </nav>
 
-      {/* Hero Section */}
-      <main className="relative z-10 max-w-5xl mx-auto px-6 pt-12 pb-24 flex flex-col items-center text-center">
-        
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-          </span>
-          <span className="text-xs font-medium text-slate-400">Next-Gen Recommendation Engine</span>
+      {/* 2. HERO SECTION */}
+      <main className="relative pt-40 pb-20 px-6 max-w-7xl mx-auto z-10 flex flex-col items-center justify-center min-h-[80vh]">
+
+        <div className="text-center max-w-4xl mx-auto">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-8 animate-fade-in-up opacity-0">
+            <Sparkles className="w-3 h-3" />
+            <span>AI-Powered Retail 2.0</span>
+          </div>
+
+          {/* Headline */}
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-[1.1] mb-8 animate-fade-in-up delay-100 opacity-0">
+            Shopping intelligence, <br />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400">
+              reimagined for you.
+            </span>
+          </h1>
+
+          {/* Subtext */}
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-12 leading-relaxed animate-fade-in-up delay-200 opacity-0">
+            Scan2Save transforms physical retail with adaptative AI. We analyze purchasing behavior in real-time to deliver hyper-personalized offers, eliminating noise and maximizing value.
+          </p>
+
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-300 opacity-0">
+            <Link
+              href="/scan"
+              className="w-full sm:w-auto px-8 py-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full font-bold flex items-center justify-center gap-2 transition-all hover:scale-105 shadow-[0_0_30px_rgba(79,70,229,0.3)]"
+            >
+              <Smartphone className="w-5 h-5" />
+              Launch Scanner
+            </Link>
+            <Link
+              href="/dashboard"
+              className="w-full sm:w-auto px-8 py-4 bg-secondary border border-border hover:bg-secondary/80 text-secondary-foreground rounded-full font-bold flex items-center justify-center gap-2 transition-all hover:scale-105"
+            >
+              View Dashboard <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
 
-        {/* PROFESSIONAL HEADLINE */}
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white mb-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
-          Precision Savings. <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-400">
-            Intelligently Curated.
-          </span>
-        </h1>
-        
-        {/* GENERALIZED STANDARD DESCRIPTION */}
-        <p className="text-lg text-slate-400 max-w-2xl mb-12 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-          Transform your shopping experience with our adaptive AI. We analyze purchasing patterns to eliminate irrelevant noise, delivering a tailored ecosystem of offers that resonate with your unique lifestyle.
-        </p>
+      </main>
 
-        {/* Interaction Zone */}
-        <div className="w-full max-w-3xl flex justify-center animate-in fade-in scale-95 duration-700 delay-200">
-
-          {/* Option 1: Live Scan */}
-          <Link
-            href="/scan"
-            className="group relative flex flex-col items-center justify-center p-10 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl shadow-2xl shadow-indigo-900/20 hover:scale-[1.02] transition-all duration-300 border border-white/10 overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="h-16 w-16 bg-white/20 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-sm group-hover:bg-white/30 transition-colors">
-              <Camera className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-white mb-2">Scan QR Code</h3>
-            <p className="text-indigo-200 text-sm">Access your personalized dashboard</p>
-          </Link>
-
-        </div>
-
-        {/* PROFESSIONAL FEATURE GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-24 w-full">
+      {/* 4. FEATURES GRID */}
+      <section className="relative z-10 py-24 px-6 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
-            { 
-              icon: BrainCircuit, 
-              title: "Predictive Analytics", 
-              desc: "Our algorithms leverage historical data to forecast your needs, ensuring high-relevance recommendations." 
+            {
+              title: "Predictive Engines",
+              desc: "Our models predict user intent before they search, reducing friction and increasing conversion.",
+              icon: Globe
             },
-            { 
-              icon: Layers, 
-              title: "Curated Filtering", 
-              desc: "We apply rigorous filtering layers to screen out generic ads, ensuring a premium, noise-free experience." 
+            {
+              title: "Dynamic Discounting",
+              desc: "Real-time generating of discount codes based on inventory levels and user loyalty scores.",
+              icon: Sparkles
             },
-            { 
-              icon: Sparkles, 
-              title: "Value Optimization", 
-              desc: "Unlock exclusive rewards and pricing tiers designed specifically for your spending segments." 
+            {
+              title: "Seamless Integration",
+              desc: "Drop-in SDKs for merchants to integrate directly with existing POS systems without hardware upgrades.",
+              icon: ShieldCheck
             }
           ].map((feature, i) => (
-            <div key={i} className="flex flex-col items-center md:items-start text-center md:text-left p-6 rounded-2xl hover:bg-white/5 transition-colors">
-              <feature.icon className="w-8 h-8 text-indigo-400 mb-4" />
-              <h4 className="text-lg font-semibold text-white mb-2">{feature.title}</h4>
-              <p className="text-slate-400 text-sm leading-relaxed">{feature.desc}</p>
+            <div key={i} className="group p-8 rounded-3xl bg-card/50 backdrop-blur-sm border border-border hover:border-primary/20 transition-all hover:-translate-y-1 duration-300 shadow-sm">
+              <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <feature.icon className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground mb-3">{feature.title}</h3>
+              <p className="text-muted-foreground leading-relaxed">{feature.desc}</p>
             </div>
           ))}
         </div>
-      </main>
-      
-      {/* Footer */}
-      <footer className="border-t border-slate-800 py-8 text-center text-slate-600 text-sm">
-        <p>&copy; {new Date().getFullYear()} Scan2Save. Intelligent Retail Solutions.</p>
-        <Link href="/get-qrs" className="text-xs text-slate-800 hover:text-slate-500 mt-2 block">
-          [Dev: Get QR Codes]
-        </Link>
+      </section>
+
+      {/* 5. FOOTER */}
+      <footer className="relative z-10 border-t border-border py-12 px-6 bg-background/50 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-2">
+            <ScanLine className="w-6 h-6 text-slate-600" />
+            <span className="font-bold text-slate-500">Scan2Save © 2024</span>
+          </div>
+          <div className="flex gap-6 text-sm text-slate-500">
+            <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
+            <a href="#" className="hover:text-foreground transition-colors">Terms</a>
+            <a href="#" className="hover:text-foreground transition-colors">Status</a>
+            <Link href="/get-qrs" className="text-indigo-500 hover:text-indigo-400">[Dev Tools]</Link>
+          </div>
+        </div>
       </footer>
+
     </div>
   );
 }

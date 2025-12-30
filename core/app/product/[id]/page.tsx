@@ -9,10 +9,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white pb-20">
-      <nav className="border-b border-slate-800 p-4">
+    <div className="min-h-screen text-foreground pb-20 font-sans">
+      <nav className="border-b border-border p-4">
         <div className="container mx-auto">
-          <Link href="/" className="flex items-center text-slate-400 hover:text-white">
+          <Link href="/" className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="w-5 h-5 mr-2" />
             Back
           </Link>
@@ -20,7 +20,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       </nav>
       <div className="container mx-auto px-4 py-10 text-center">
         <h1 className="text-3xl font-bold">Product Details</h1>
-        <p className="text-slate-400 mt-4">Product ID: {id}</p>
+        <p className="text-muted-foreground mt-4">Product ID: {id}</p>
       </div>
     </div>
   );

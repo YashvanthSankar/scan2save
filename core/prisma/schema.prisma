@@ -27,6 +27,7 @@ model User {
   transactions Transaction[]
   feed         PersonalizedFeed[]
   cart         Cart?
+  claimedOffers ClaimedOffer[]
 }
 
 // 2. STORE MODEL (The physical shop)
@@ -43,6 +44,7 @@ model Store {
   
   products     StoreProduct[] // Inventory specific to this store
   transactions Transaction[]  // Sales at this store
+  claimedOffers ClaimedOffer[]
   
   createdAt DateTime @default(now())
 }
@@ -125,6 +127,7 @@ model ActiveOffer {
   category           String? // Category for efficient targeting
   
   feedItems          PersonalizedFeed[]
+  claimedOffers      ClaimedOffer[]
 }
 
 model PersonalizedFeed {
@@ -156,4 +159,18 @@ model CartItem {
   product   Product @relation(fields: [productId], references: [id])
   
   quantity  Int
+}
+
+model ClaimedOffer {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  offerId     Int
+  offer       ActiveOffer @relation(fields: [offerId], references: [id])
+  storeId     String
+  store       Store       @relation(fields: [storeId], references: [id])
+  claimedAt   DateTime    @default(now())
+  usedAt      DateTime?
+  isUsed      Boolean     @default(false)
+  discountCode String     @unique @default(cuid())
 }

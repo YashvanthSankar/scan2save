@@ -60,28 +60,28 @@ export default function AdminUsersPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">User Management</h1>
-          <p className="text-slate-400">View registered users and their activity.</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">User Management</h1>
+          <p className="text-muted-foreground">View registered users and their activity.</p>
         </div>
 
         {/* Search */}
         <div className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-3.5 w-5 h-5 text-slate-500" />
+          <Search className="absolute left-3 top-3.5 w-5 h-5 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search by name or phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-white focus:border-indigo-500 focus:outline-none transition-colors"
+            className="w-full bg-card/50 border border-border rounded-xl py-3 pl-10 pr-4 text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
           />
         </div>
       </div>
 
       {/* Users Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+      <div className="bg-card/40 backdrop-blur-md border border-border rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-400">
-            <thead className="bg-slate-950/50 text-slate-200 uppercase text-xs font-bold tracking-wider border-b border-slate-800">
+          <table className="w-full text-left text-sm text-muted-foreground">
+            <thead className="bg-muted/50 text-foreground uppercase text-xs font-bold tracking-wider border-b border-border">
               <tr>
                 <th className="px-6 py-4">User</th>
                 <th className="px-6 py-4">Phone</th>
@@ -90,20 +90,20 @@ export default function AdminUsersPage() {
                 <th className="px-6 py-4">Joined</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-border">
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-slate-800/50 transition-colors group">
+                <tr key={user.id} className="hover:bg-muted/30 transition-colors group">
 
                   {/* User */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white font-bold shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-bold shrink-0">
                         {user.name.charAt(0).toUpperCase()}
                       </div>
-                      <div className="font-bold text-white flex items-center gap-2">
+                      <div className="font-bold text-foreground flex items-center gap-2">
                         {user.name}
                         {user.role === 'ADMIN' && (
-                          <Shield className="w-3 h-3 text-indigo-400" />
+                          <Shield className="w-3 h-3 text-primary" />
                         )}
                       </div>
                     </div>
@@ -120,8 +120,8 @@ export default function AdminUsersPage() {
                   {/* Role */}
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${user.role === 'ADMIN'
-                        ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
-                        : 'bg-slate-700/50 text-slate-400 border-slate-600'
+                      ? 'bg-primary/10 text-primary border-primary/20'
+                      : 'bg-muted text-muted-foreground border-border'
                       }`}>
                       {user.role}
                     </span>
@@ -130,8 +130,8 @@ export default function AdminUsersPage() {
                   {/* Transactions */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <ShoppingBag className="w-4 h-4 text-emerald-400" />
-                      <span className="text-white font-medium">{user.transactionCount}</span>
+                      <ShoppingBag className="w-4 h-4 text-emerald-500" />
+                      <span className="text-foreground font-medium">{user.transactionCount}</span>
                     </div>
                   </td>
 
@@ -154,7 +154,7 @@ export default function AdminUsersPage() {
         </div>
 
         {filteredUsers.length === 0 && (
-          <div className="p-12 text-center text-slate-500">
+          <div className="p-12 text-center text-muted-foreground">
             {searchTerm ? `No users found matching "${searchTerm}"` : 'No users registered yet.'}
           </div>
         )}

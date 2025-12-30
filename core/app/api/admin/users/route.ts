@@ -18,13 +18,12 @@ export async function GET() {
         });
 
         // Calculate total spent per user (simplified - just count transactions)
-        const usersWithStats = users.map(u => ({
-            id: u.id,
-            phone: u.phoneNumber,
-            name: u.name || 'Anonymous',
-            role: u.role,
-            joinedAt: u.createdAt,
-            transactionCount: u._count.transactions
+        const usersWithStats = users.map(user => ({
+            id: user.id,
+            role: user.role,
+            phoneNumber: user.phoneNumber,
+            joinedAt: user.createdAt,
+            ordersCount: user._count?.transactions ?? 0
         }));
 
         return NextResponse.json({ success: true, users: usersWithStats });

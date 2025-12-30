@@ -29,15 +29,15 @@ export default function CartPage() {
 
   if (checkoutStep === 'success') {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-6 animate-in zoom-in duration-500">
-          <CheckCircle2 className="w-10 h-10 text-black" />
+      <div className="min-h-screen text-foreground flex flex-col items-center justify-center p-6 text-center font-sans">
+        <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mb-6 animate-in zoom-in duration-500">
+          <CheckCircle2 className="w-10 h-10 text-white" />
         </div>
         <h1 className="text-3xl font-bold mb-2">Order Confirmed!</h1>
-        <p className="text-gray-400 max-w-md mb-8">
+        <p className="text-muted-foreground max-w-md mb-8">
           Your order #8842 has been placed successfully. You will receive an email confirmation shortly.
         </p>
-        <Link href="/" className="bg-white text-black px-8 py-3 rounded-full font-bold hover:bg-gray-200 transition-colors">
+        <Link href="/" className="bg-primary text-primary-foreground px-8 py-3 rounded-full font-bold hover:bg-primary/90 transition-colors">
           Continue Shopping
         </Link>
       </div>
@@ -45,8 +45,8 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 md:p-12">
-      <Link href="/" className="flex items-center text-gray-400 hover:text-white mb-8">
+    <div className="min-h-screen text-foreground p-6 md:p-12 font-sans relative">
+      <Link href="/" className="flex items-center text-muted-foreground hover:text-foreground mb-8 transition-colors">
         <ArrowLeft className="w-4 h-4 mr-2" /> Continue Shopping
       </Link>
 
@@ -56,18 +56,18 @@ export default function CartPage() {
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-4">
           {cartItems.map((item) => (
-            <div key={item.id} className="flex gap-4 bg-gray-900 border border-gray-800 p-4 rounded-xl">
-              <div className="w-24 h-24 bg-gray-800 rounded-lg overflow-hidden">
+            <div key={item.id} className="flex gap-4 bg-card/40 backdrop-blur-md border border-border p-4 rounded-xl shadow-sm">
+              <div className="w-24 h-24 bg-muted rounded-lg overflow-hidden flex-shrink-0">
                 <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
               </div>
               <div className="flex-1 flex flex-col justify-between">
                 <div className="flex justify-between items-start">
-                  <h3 className="font-semibold">{item.name}</h3>
-                  <p className="font-bold">₹{item.price.toLocaleString()}</p>
+                  <h3 className="font-semibold text-foreground">{item.name}</h3>
+                  <p className="font-bold text-foreground">₹{item.price.toLocaleString()}</p>
                 </div>
-                <div className="flex justify-between items-center text-gray-400 text-sm">
+                <div className="flex justify-between items-center text-muted-foreground text-sm">
                   <span>Qty: {item.quantity}</span>
-                  <button className="text-red-400 hover:text-red-300 flex items-center gap-1">
+                  <button className="text-red-500 hover:text-red-600 flex items-center gap-1 transition-colors">
                     <Trash2 className="w-4 h-4" /> Remove
                   </button>
                 </div>
@@ -75,16 +75,16 @@ export default function CartPage() {
             </div>
           ))}
           {cartItems.length === 0 && (
-            <div className="text-center py-12 bg-gray-900 rounded-xl border border-gray-800">
-              <p className="text-gray-400">Your cart is empty.</p>
+            <div className="text-center py-12 bg-card/40 rounded-xl border border-border">
+              <p className="text-muted-foreground">Your cart is empty.</p>
             </div>
           )}
         </div>
 
         {/* Summary */}
-        <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl h-fit">
-          <h2 className="text-xl font-bold mb-6">Order Summary</h2>
-          <div className="space-y-3 text-sm text-gray-400">
+        <div className="bg-card/40 backdrop-blur-md border border-border p-6 rounded-2xl h-fit shadow-lg">
+          <h2 className="text-xl font-bold mb-6 text-foreground">Order Summary</h2>
+          <div className="space-y-3 text-sm text-muted-foreground">
             <div className="flex justify-between">
               <span>Subtotal</span>
               <span>₹{subtotal.toLocaleString()}</span>
@@ -93,8 +93,8 @@ export default function CartPage() {
               <span>GST (18%)</span>
               <span>₹{tax.toLocaleString()}</span>
             </div>
-            <div className="h-px bg-gray-800 my-4" />
-            <div className="flex justify-between text-white text-lg font-bold">
+            <div className="h-px bg-border my-4" />
+            <div className="flex justify-between text-foreground text-lg font-bold">
               <span>Total</span>
               <span>₹{total.toLocaleString()}</span>
             </div>
@@ -103,7 +103,7 @@ export default function CartPage() {
           <button
             onClick={handleCheckout}
             disabled
-            className="w-full mt-8 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl flex flex-col items-center justify-center gap-1 transition-all opacity-80 cursor-not-allowed"
+            className="w-full mt-8 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl flex flex-col items-center justify-center gap-1 transition-all opacity-80 cursor-not-allowed shadow-md"
           >
             <span className="flex items-center gap-2">
               <CreditCard className="w-5 h-5" />

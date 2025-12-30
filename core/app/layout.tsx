@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { CartProvider } from "@/lib/CartContext";
+import FloatingCart from "@/components/FloatingCart";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Background } from "@/components/Background";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,11 +28,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <CartProvider>
+            <Background />
+            {children}
+            <FloatingCart />
+            <div className="fixed bottom-24 right-4 z-[60]">
+              <ThemeToggle />
+            </div>
+          </CartProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

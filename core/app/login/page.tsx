@@ -6,6 +6,7 @@ import { sendOTP, verifyOTP } from '@/lib/firebaseAuth';
 import { ScanLine, Smartphone, Lock, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
 import type { ConfirmationResult } from 'firebase/auth';
 import { Suspense } from 'react';
+import Link from 'next/link';
 
 function LoginContent() {
   const router = useRouter();
@@ -100,25 +101,22 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 px-4 selection:bg-indigo-500/30 font-sans">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 selection:bg-primary/30 font-sans text-foreground">
 
       {/* Background Ambience */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-indigo-900/20 blur-[100px]" />
-        <div className="absolute top-[20%] -right-[10%] w-[40%] h-[40%] rounded-full bg-emerald-900/10 blur-[100px]" />
-      </div>
 
-      <div className="w-full max-w-md bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl p-8 relative z-10">
+
+      <div className="w-full max-w-md bg-card/80 backdrop-blur-xl border border-border rounded-2xl shadow-2xl p-8 relative z-10">
 
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-500/10 mb-4 border border-indigo-500/20">
-            <ScanLine className="w-6 h-6 text-indigo-400" />
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-4 border border-primary/20">
+            <ScanLine className="w-6 h-6 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">
-            Scan2<span className="text-indigo-400">Save</span>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">
+            Scan2<span className="text-primary">Save</span>
           </h1>
-          <p className="text-slate-400 mt-2 text-sm">
-            {step === 'phone' ? 'Login to access your savings' : 'Enter the code sent to your phone'}
+          <p className="text-muted-foreground mt-2 text-sm">
+            {step === 'phone' ? 'Get started with your phone number' : 'Enter the code sent to your phone'}
           </p>
         </div>
 
@@ -126,21 +124,21 @@ function LoginContent() {
           {step === 'phone' ? (
             <form onSubmit={handleSendOTP} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Phone Number</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-1.5">Phone Number</label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none z-10">
-                    <span className="text-slate-400 font-medium border-r border-slate-700 pr-3">🇮🇳 +91</span>
+                    <span className="text-muted-foreground font-medium border-r border-border pr-3">🇮🇳 +91</span>
                   </div>
                   <input
                     type="tel"
                     required
                     maxLength={10}
-                    className="block w-full pl-24 pr-10 py-3 bg-slate-950 border border-slate-700 rounded-xl text-white placeholder-slate-600 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-lg tracking-wide"
+                    className="block w-full pl-24 pr-10 py-3 bg-secondary/50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-lg tracking-wide bg-transparent"
                     placeholder="98765 43210"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
                   />
-                  <Smartphone className="absolute right-3 top-3.5 w-5 h-5 text-slate-600 group-focus-within:text-indigo-400 transition-colors" />
+                  <Smartphone className="absolute right-3 top-3.5 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                 </div>
               </div>
 
@@ -149,28 +147,32 @@ function LoginContent() {
               <button
                 type="submit"
                 disabled={loading || phoneNumber.length < 10}
-                className="w-full flex justify-center items-center py-3 px-4 rounded-xl shadow-lg shadow-indigo-500/20 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="w-full flex justify-center items-center py-3 px-4 rounded-xl shadow-lg shadow-primary/20 text-sm font-bold text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {loading ? <><Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" /> Sending Code...</> : <><ArrowRight className="mr-2 h-4 w-4" /> Get OTP</>}
               </button>
+
+              <div className="text-center mt-4">
+                <p className="text-xs text-slate-500">By continuing, you agree to our Terms & Privacy Policy.</p>
+              </div>
             </form>
           ) : (
             <form onSubmit={handleVerifyOTP} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Verification Code</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-1.5">Verification Code</label>
                 <div className="relative group">
                   <input
                     type="text"
                     required
                     maxLength={6}
-                    className="block w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-white placeholder-slate-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all tracking-[0.5em] text-center font-mono text-xl"
+                    className="block w-full pl-10 pr-4 py-3 bg-secondary/50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all tracking-[0.5em] text-center font-mono text-xl bg-transparent"
                     placeholder="••••••"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   />
-                  <Lock className="absolute left-3 top-3.5 w-5 h-5 text-slate-600 group-focus-within:text-emerald-400 transition-colors" />
+                  <Lock className="absolute left-3 top-3.5 w-5 h-5 text-muted-foreground group-focus-within:text-emerald-500 transition-colors" />
                 </div>
-                <p className="text-xs text-slate-500 mt-2 text-center">Code sent to +91 {phoneNumber}</p>
+                <p className="text-xs text-muted-foreground mt-2 text-center">Code sent to +91 {phoneNumber}</p>
               </div>
 
               <button
@@ -184,7 +186,7 @@ function LoginContent() {
               <button
                 type="button"
                 onClick={() => setStep('phone')}
-                className="w-full text-sm text-slate-400 hover:text-white transition-colors py-2"
+                className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
               >
                 ← Wrong Number?
               </button>
