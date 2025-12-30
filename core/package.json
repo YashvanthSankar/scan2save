@@ -4,14 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "eslint"
-  },
-  "prisma": {
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+    "lint": "eslint",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.1",
     "@supabase/supabase-js": "^2.89.0",
     "@types/qrcode.react": "^1.0.5",
     "@yudiel/react-qr-scanner": "^2.5.0",
@@ -21,20 +20,19 @@
     "lucide-react": "^0.562.0",
     "next": "16.0.10",
     "next-themes": "^0.4.6",
+    "prisma": "^6.19.1",
     "qrcode.react": "^4.2.0",
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "react-qr-code": "^2.0.18"
   },
   "devDependencies": {
-    "@prisma/client": "^6.19.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.0.10",
-    "prisma": "^6.19.1",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "typescript": "^5"
