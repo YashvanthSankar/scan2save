@@ -8,22 +8,80 @@ import {
   ShoppingBag,
   Clock,
   ChevronRight,
-  Receipt
+  Receipt,
+  Loader2
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+// Types matching API response
+interface UserProfile {
+  name: string;
+  phone: string;
+  memberSince: string;
+  role: string;
+}
+
+interface UserStats {
+  totalSaved: number;
+  totalSpent: number;
+  points: number;
+  voucherCount: number;
+}
+
+interface Transaction {
+  id: string;
+  store: string;
+  date: string;
+  items: number;
+  total: number;
+  status: string;
+}
 
 export default function ProfilePage() {
-  // Mock Data
-  const user = {
-    name: "Yashvanth S",
-    phone: "+91 98765 43210",
-    memberSince: "Dec 2024"
-  };
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [stats, setStats] = useState<UserStats | null>(null);
+  const [history, setHistory] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const history = [
-    { id: 'TXN_882', store: 'Reliance Smart', date: 'Today, 10:30 AM', items: 4, total: 450, status: 'Completed' },
-    { id: 'TXN_119', store: 'DMart HSR', date: 'Yesterday, 6:15 PM', items: 12, total: 1240, status: 'Completed' },
-    { id: 'TXN_002', store: 'Nilgiris', date: '22 Dec, 9:00 AM', items: 1, total: 40, status: 'Completed' },
-  ];
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch('/api/user/me');
+        if (res.status === 401 || res.status === 404) {
+          // If user invalid, allow UI to render with null user so they can see Logout button
+          // Or we could auto-logout. Let's auto-logout for 401, but show UI for 404 for debugging or just render a 'Guest' state.
+          if (res.status === 404) {
+            setUser({ name: 'Guest (Invalid Session)', phone: 'Please Logout', memberSince: new Date().toISOString(), role: 'GUEST' });
+          }
+          setLoading(false);
+          return;
+        }
+        const data = await res.json();
+        if (data.success) {
+          setUser(data.user);
+          setStats(data.stats);
+          setHistory(data.history);
+        }
+      } catch (error) {
+        console.error("Failed to load profile", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Allow rendering even if user is null (handle safely below) or use the fallback set above
+  const displayUser = user || { name: 'Guest', phone: '', memberSince: new Date().toISOString(), role: 'GUEST' };
 
   return (
     <div className="min-h-screen text-foreground font-sans pb-24 relative">
@@ -41,12 +99,14 @@ export default function ProfilePage() {
         {/* User Card */}
         <div className="flex items-center gap-4">
           <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-2xl font-bold shadow-2xl shadow-indigo-500/20 text-white">
-            {user.name.charAt(0)}
+            {displayUser.name ? displayUser.name.charAt(0).toUpperCase() : <User />}
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-foreground">{user.name}</h2>
-            <p className="text-muted-foreground">{user.phone}</p>
-            <p className="text-xs text-muted-foreground mt-1">Member since {user.memberSince}</p>
+            <h2 className="text-2xl font-bold text-foreground">{displayUser.name || 'User'}</h2>
+            <p className="text-muted-foreground">{displayUser.phone}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Member since {new Date(displayUser.memberSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+            </p>
           </div>
         </div>
 
@@ -54,11 +114,11 @@ export default function ProfilePage() {
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-card/40 backdrop-blur-md border border-border p-4 rounded-2xl shadow-sm">
             <p className="text-muted-foreground text-xs uppercase font-bold mb-1">Total Savings</p>
-            <p className="text-2xl font-bold text-emerald-500">₹1,730</p>
+            <p className="text-2xl font-bold text-emerald-500">₹{stats?.totalSaved?.toLocaleString() || 0}</p>
           </div>
           <div className="bg-card/40 backdrop-blur-md border border-border p-4 rounded-2xl shadow-sm">
-            <p className="text-muted-foreground text-xs uppercase font-bold mb-1">Trips</p>
-            <p className="text-2xl font-bold text-primary">14</p>
+            <p className="text-muted-foreground text-xs uppercase font-bold mb-1">Points</p>
+            <p className="text-2xl font-bold text-primary">{stats?.points?.toLocaleString() || 0}</p>
           </div>
         </div>
 
@@ -66,28 +126,38 @@ export default function ProfilePage() {
         <div>
           <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-foreground">
             <Clock className="w-5 h-5 text-primary" />
-            Order History
+            Recent Activity
           </h3>
 
-          <div className="space-y-3">
-            {history.map((item) => (
-              <div key={item.id} className="bg-card/40 backdrop-blur-md border border-border p-4 rounded-2xl flex items-center justify-between group hover:bg-muted/50 transition-colors cursor-pointer shadow-sm">
-                <div className="flex items-center gap-4">
-                  <div className="bg-muted p-3 rounded-xl text-muted-foreground group-hover:text-primary transition-colors">
-                    <ShoppingBag size={20} />
+          {history.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm border border-dashed border-border rounded-xl">
+              No recent activity found.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {history.map((item) => (
+                <div key={item.id} className="bg-card/40 backdrop-blur-md border border-border p-4 rounded-2xl flex items-center justify-between group hover:bg-muted/50 transition-colors cursor-pointer shadow-sm">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-muted p-3 rounded-xl text-muted-foreground group-hover:text-primary transition-colors">
+                      <ShoppingBag size={20} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-foreground">{item.store}</h4>
+                      <p className="text-muted-foreground text-xs">
+                        {new Date(item.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                        {' • '}
+                        {new Date(item.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric' })}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-foreground">{item.store}</h4>
-                    <p className="text-muted-foreground text-xs">{item.date}</p>
+                  <div className="text-right">
+                    <p className="font-bold text-foreground">₹{item.total.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">{item.items} items</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-foreground">₹{item.total}</p>
-                  <p className="text-xs text-muted-foreground">{item.items} items</p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Settings Links */}
@@ -106,8 +176,20 @@ export default function ProfilePage() {
             </div>
             <ChevronRight size={16} className="text-muted-foreground" />
           </button>
-        </div>
 
+          {/* LOGOUT BUTTON */}
+          <button
+            onClick={async () => {
+              await fetch('/api/auth/logout', { method: 'POST' });
+              window.location.href = '/login';
+            }}
+            className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-red-500/10 transition-colors text-red-500"
+          >
+            <div className="flex items-center gap-3">
+              <span className="font-bold">Log Out</span>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
   );

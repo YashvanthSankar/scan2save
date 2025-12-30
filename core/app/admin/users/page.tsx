@@ -42,7 +42,7 @@ export default function AdminUsersPage() {
   }, []);
 
   const filteredUsers = users.filter(u =>
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.phone.includes(searchTerm)
   );
 
@@ -98,10 +98,10 @@ export default function AdminUsersPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-bold shrink-0">
-                        {user.name.charAt(0).toUpperCase()}
+                        {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                       </div>
                       <div className="font-bold text-foreground flex items-center gap-2">
-                        {user.name}
+                        {user.name || 'Unknown User'}
                         {user.role === 'ADMIN' && (
                           <Shield className="w-3 h-3 text-primary" />
                         )}

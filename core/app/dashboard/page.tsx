@@ -12,20 +12,72 @@ import {
   ShoppingBag,
   Zap,
   User,
-  Package
+  Package,
+  Loader2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useEffect, useState } from 'react';
+
+// Types (reused from Profile for consistency, ideally in a types file)
+interface UserProfile {
+  name: string;
+}
+
+interface UserStats {
+  totalSaved: number;
+  points: number;
+  voucherCount: number;
+}
+
+interface Transaction {
+  id: string;
+  store: string;
+  loc: string;
+  date: string;
+  items: number;
+  amount: number; // API returns 'total' but map expects 'amount' logic, we'll fix in fetch
+  total: number;
+}
 
 export default function UserDashboard() {
   const router = useRouter();
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [stats, setStats] = useState<UserStats | null>(null);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock User Data
-  const user = {
-    name: "Yashvanth",
-    totalSaved: 1250,
-    points: 450
-  };
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const res = await fetch('/api/user/me');
+        const data = await res.json();
+        if (data.success) {
+          setUser(data.user);
+          setStats(data.stats);
+          setRecentActivity(data.history.map((h: any) => ({
+            ...h,
+            amount: `₹${h.total.toLocaleString()}`, // Format for display
+            icon: h.store.toLowerCase().includes('coffee') ? '☕' : (h.store.toLowerCase().includes('online') ? '📦' : '🛒')
+          })));
+        }
+      } catch (error) {
+        console.error("Failed to load dashboard", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen text-foreground font-sans pb-32 overflow-x-hidden selection:bg-emerald-500/30">
@@ -35,7 +87,7 @@ export default function UserDashboard() {
         <div>
           <p className="text-muted-foreground text-sm font-medium mb-1 tracking-wide">Good Evening,</p>
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">
-            {user.name}
+            {user?.name || 'User'}
           </h1>
         </div>
         <Link href="/profile" className="p-2 -mr-2 rounded-full hover:bg-muted/50 transition-colors">
@@ -82,10 +134,10 @@ export default function UserDashboard() {
                 </div>
                 <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Total Saved</span>
               </div>
-              <h2 className="text-4xl font-bold text-foreground tracking-tight">₹{user.totalSaved}</h2>
+              <h2 className="text-4xl font-bold text-foreground tracking-tight">₹{stats?.totalSaved?.toLocaleString() || 0}</h2>
               <p className="text-emerald-400 text-sm font-medium mt-1 flex items-center gap-1">
                 <ArrowUpRight className="w-3 h-3" />
-                <span>+12% this month</span>
+                <span>Lifetime Savings</span>
               </p>
             </div>
 
@@ -108,7 +160,7 @@ export default function UserDashboard() {
           </div>
           <div>
             <span className="text-muted-foreground text-xs font-semibold">Rewards</span>
-            <p className="text-xl font-bold text-foreground mt-0.5">{user.points}</p>
+            <p className="text-xl font-bold text-foreground mt-0.5">{stats?.points?.toLocaleString() || 0} pts</p>
           </div>
         </div>
 
@@ -118,7 +170,7 @@ export default function UserDashboard() {
           </div>
           <div>
             <span className="text-muted-foreground text-xs font-semibold">Vouchers</span>
-            <p className="text-xl font-bold text-foreground mt-0.5">2 Active</p>
+            <p className="text-xl font-bold text-foreground mt-0.5">{stats?.voucherCount || 0} Active</p>
           </div>
         </div>
 
@@ -132,11 +184,11 @@ export default function UserDashboard() {
         </h3>
 
         <div className="space-y-3">
-          {[
-            { store: 'Starbucks', loc: 'Indiranagar', time: '2h ago', amount: '₹140', icon: '☕' },
-            { store: 'FreshMart', loc: 'Koramangala', time: 'Yesterday', amount: '₹1,240', icon: '🛒' },
-            { store: 'Amazon Pay', loc: 'Online', time: '2 days ago', amount: '₹890', icon: '📦' },
-          ].map((item, i) => (
+          {recentActivity.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground text-sm border border-dashed border-border rounded-xl">
+              No recent activity. Start scanning!
+            </div>
+          ) : recentActivity.map((item, i) => (
             <div key={i} className="flex items-center justify-between p-1 pr-4 rounded-2xl bg-card/40 border border-border hover:bg-card/60 transition-all">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center text-xl shadow-inner">
@@ -147,13 +199,13 @@ export default function UserDashboard() {
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>{item.loc}</span>
                     <span className="w-1 h-1 rounded-full bg-muted-foreground" />
-                    <span>{item.time}</span>
+                    <span>{new Date(item.date).toLocaleDateString()}</span>
                   </div>
                 </div>
               </div>
               <div className="text-right">
                 <span className="block font-bold text-sm text-foreground">{item.amount}</span>
-                <span className="text-[10px] text-emerald-500 font-medium">Saved 10%</span>
+                <span className="text-[10px] text-emerald-500 font-medium">Saved 12%</span>
               </div>
             </div>
           ))}
