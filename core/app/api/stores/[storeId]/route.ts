@@ -14,9 +14,9 @@ export async function GET(
     const { storeId } = await params;
 
     const { data: store, error } = await supabase
-      .from('stores')
+      .from('Store')
       .select('*')
-      .eq('store_id', storeId)
+      .eq('storeId', storeId)
       .single();
 
     if (error) throw error;

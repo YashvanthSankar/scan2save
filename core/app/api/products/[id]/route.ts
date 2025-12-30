@@ -14,7 +14,7 @@ export async function GET(
     const { id } = await params;
 
     const { data: product, error: productError } = await supabase
-      .from('products')
+      .from('Product')
       .select('*')
       .eq('id', id)
       .single();
@@ -22,7 +22,7 @@ export async function GET(
     if (productError) throw productError;
 
     const { data: storeProducts, error: spError } = await supabase
-      .from('store_products')
+      .from('StoreProduct')
       .select(`
         price,
         original_price,
@@ -30,19 +30,19 @@ export async function GET(
         in_stock,
         store:stores (
           id,
-          store_id,
+          storeId,
           name,
           location
         )
       `)
-      .eq('product_id', id);
+      .eq('productId', id);
 
     if (spError) throw spError;
 
     const productWithPricing = {
       ...product,
       stores: storeProducts.map((sp: any) => ({
-        storeId: sp.store.store_id,
+        storeId: sp.store.storeId,
         storeName: sp.store.name,
         storeLocation: sp.store.location,
         price: parseFloat(sp.price),

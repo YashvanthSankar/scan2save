@@ -17,15 +17,15 @@ export async function GET(
     const query = searchParams.get('q');
 
     const { data: store, error: storeError } = await supabase
-      .from('stores')
+      .from('Store')
       .select('id')
-      .eq('store_id', storeId)
+      .eq('storeId', storeId)
       .single();
 
     if (storeError) throw storeError;
 
     let productsQuery = supabase
-      .from('store_products')
+      .from('StoreProduct')
       .select(`
         id,
         price,
@@ -41,7 +41,7 @@ export async function GET(
           barcode
         )
       `)
-      .eq('store_id', store.id)
+      .eq('storeId', store.id)
       .eq('in_stock', true);
 
     const { data: storeProducts, error } = await productsQuery;

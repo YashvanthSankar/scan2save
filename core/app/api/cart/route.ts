@@ -19,9 +19,9 @@ export async function GET(request: Request) {
     }
 
     const { data: cart, error: cartError } = await supabase
-      .from('carts')
-      .select('id, store_id, items:cart_items(id, quantity, product:products(id, name, category, image_url))')
-      .eq('user_id', userId)
+      .from('Cart')
+      .select('id, storeId, items:cart_items(id, quantity, product:products(id, name, category, image_url))')
+      .eq('userId', userId)
       .maybeSingle();
 
     if (cartError) throw cartError;
@@ -33,10 +33,10 @@ export async function GET(request: Request) {
     const itemsWithPricing = await Promise.all(
       cart.items.map(async (item: any) => {
         const { data: storeProduct } = await supabase
-          .from('store_products')
+          .from('StoreProduct')
           .select('price, original_price')
-          .eq('store_id', cart.store_id)
-          .eq('product_id', item.product.id)
+          .eq('storeId', cart.storeId)
+          .eq('productId', item.product.id)
           .single();
 
         return {
@@ -51,7 +51,7 @@ export async function GET(request: Request) {
       success: true,
       cart: {
         id: cart.id,
-        storeId: cart.store_id,
+        storeId: cart.storeId,
       },
       items: itemsWithPricing,
     });
@@ -77,15 +77,15 @@ export async function POST(request: Request) {
     }
 
     let { data: cart } = await supabase
-      .from('carts')
+      .from('Cart')
       .select('id')
-      .eq('user_id', userId)
+      .eq('userId', userId)
       .maybeSingle();
 
     if (!cart) {
       const { data: newCart, error: createError } = await supabase
-        .from('carts')
-        .insert({ user_id: userId, store_id: storeId })
+        .from('Cart')
+        .insert({ userId: userId, storeId: storeId })
         .select()
         .single();
 
@@ -94,25 +94,25 @@ export async function POST(request: Request) {
     }
 
     const { data: existingItem } = await supabase
-      .from('cart_items')
+      .from('CartItem')
       .select('id, quantity')
-      .eq('cart_id', cart!.id)
-      .eq('product_id', productId)
+      .eq('cartId', cart!.id)
+      .eq('productId', productId)
       .maybeSingle();
 
     if (existingItem) {
       const { error: updateError } = await supabase
-        .from('cart_items')
+        .from('CartItem')
         .update({ quantity: existingItem.quantity + quantity })
         .eq('id', existingItem.id);
 
       if (updateError) throw updateError;
     } else {
       const { error: insertError } = await supabase
-        .from('cart_items')
+        .from('CartItem')
         .insert({
-          cart_id: cart!.id,
-          product_id: productId,
+          cartId: cart!.id,
+          productId: productId,
           quantity: quantity,
         });
 
@@ -142,7 +142,7 @@ export async function DELETE(request: Request) {
     }
 
     const { error } = await supabase
-      .from('cart_items')
+      .from('CartItem')
       .delete()
       .eq('id', itemId);
 

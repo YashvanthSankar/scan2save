@@ -20,23 +20,23 @@ export async function GET(request: Request) {
     }
 
     const { data: store, error: storeError } = await supabase
-      .from('stores')
+      .from('Store')
       .select('id')
-      .eq('store_id', storeId)
+      .eq('storeId', storeId)
       .single();
 
     if (storeError) throw storeError;
 
     const { data: userPersonas, error: personaError } = await supabase
-      .from('user_personas')
+      .from('UserPersona')
       .select('*')
-      .eq('user_id', userId)
+      .eq('userId', userId)
       .order('confidence_score', { ascending: false });
 
     if (personaError) throw personaError;
 
     const { data: userTransactions, error: transactionsError } = await supabase
-      .from('transactions')
+      .from('Transaction')
       .select(`
         id,
         total_amount,
@@ -48,8 +48,8 @@ export async function GET(request: Request) {
           )
         )
       `)
-      .eq('user_id', userId)
-      .eq('store_id', store.id)
+      .eq('userId', userId)
+      .eq('storeId', store.id)
       .order('created_at', { ascending: false })
       .limit(10);
 
@@ -87,7 +87,7 @@ export async function GET(request: Request) {
     ];
 
     let offersQuery = supabase
-      .from('active_offers')
+      .from('ActiveOffer')
       .select(`
         id,
         title,
@@ -106,9 +106,9 @@ export async function GET(request: Request) {
           aisle
         )
       `)
-      .eq('store_id', store.id)
+      .eq('storeId', store.id)
       .eq('is_active', true)
-      .eq('store_products.store_id', store.id)
+      .eq('store_products.storeId', store.id)
       .gt('valid_until', new Date().toISOString())
       .order('discount_percentage', { ascending: false })
       .limit(20);
@@ -145,10 +145,10 @@ export async function GET(request: Request) {
     const recommendations = scoredOffers.slice(0, 10);
 
     for (const rec of recommendations) {
-      await supabase.from('personalized_feeds').insert({
-        user_id: userId,
-        offer_id: rec.id,
-        store_id: store.id,
+      await supabase.from('PersonalizedFeed').insert({
+        userId: userId,
+        offerId: rec.id,
+        storeId: store.id,
         relevance_score: rec.relevanceScore,
       });
     }
