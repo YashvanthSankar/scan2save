@@ -9,8 +9,11 @@ import {
   Clock,
   ChevronRight,
   Receipt,
-  Loader2
+  Loader2,
+  Moon,
+  Sun
 } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
 // Types matching API response
@@ -35,6 +38,38 @@ interface Transaction {
   items: number;
   total: number;
   status: string;
+}
+
+// Inline Theme Toggle Row Component
+function ThemeToggleRow() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  const isDark = theme === 'dark';
+
+  return (
+    <button
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
+    >
+      <div className="flex items-center gap-3">
+        {isDark ? <Moon size={20} /> : <Sun size={20} />}
+        <span>Theme</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-sm capitalize">{theme}</span>
+        <div className={`w-10 h-6 rounded-full p-1 transition-colors ${isDark ? 'bg-primary' : 'bg-muted'}`}>
+          <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${isDark ? 'translate-x-4' : 'translate-x-0'}`} />
+        </div>
+      </div>
+    </button>
+  );
 }
 
 export default function ProfilePage() {
@@ -162,6 +197,9 @@ export default function ProfilePage() {
 
         {/* Settings Links */}
         <div className="pt-4 border-t border-border space-y-2">
+          {/* Theme Toggle */}
+          <ThemeToggleRow />
+
           <button className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground">
             <div className="flex items-center gap-3">
               <Settings size={20} />

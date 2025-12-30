@@ -42,9 +42,6 @@ export default function RootLayout({
             <Background />
             {children}
             <FloatingCart />
-            <div className="fixed bottom-24 right-4 z-[60]">
-              <ThemeToggle />
-            </div>
           </CartProvider>
         </ThemeProvider>
       </body>
