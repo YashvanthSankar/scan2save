@@ -10,7 +10,7 @@ Scan2Save transforms physical retail with adaptive intelligence. Our ML-powered 
 
 ---
 
-## 🎯 Core Value Proposition
+## Core Value Proposition
 
 | For Shoppers | For Retailers |
 |--------------|---------------|
@@ -20,7 +20,7 @@ Scan2Save transforms physical retail with adaptive intelligence. Our ML-powered 
 
 ---
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -47,7 +47,7 @@ Scan2Save transforms physical retail with adaptive intelligence. Our ML-powered 
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 scan2save/
@@ -76,7 +76,7 @@ scan2save/
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -147,7 +147,7 @@ GROQ_API_KEY="..."
 
 ---
 
-## 🔐 Key Features
+## Key Features
 
 ### 1. QR-Based Store Entry
 Shoppers scan a store's unique QR code to "enter" the digital store experience.
@@ -172,7 +172,7 @@ Real-time recommendation engine analyzes:
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
@@ -187,7 +187,7 @@ Real-time recommendation engine analyzes:
 
 ---
 
-## 📱 User Flow
+## User Flow
 
 ```
 ┌────────────┐     ┌─────────────┐     ┌──────────────┐
@@ -210,7 +210,7 @@ Real-time recommendation engine analyzes:
 
 ---
 
-## 🚢 Deployment
+## Deployment
 
 ### Vercel (Recommended)
 
@@ -223,13 +223,13 @@ Real-time recommendation engine analyzes:
 
 ---
 
-## 📄 License
+## License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 Built with ❤️ by **Yashvanth S**
 
