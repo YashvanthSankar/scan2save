@@ -99,15 +99,12 @@ let groqInstance: GroqClient | null = null;
 export function getGroqClient(apiKey?: string): GroqClient {
     if (!groqInstance) {
         // Prefer explicit key, then GROQ env, then fall back to GEMINI env (renamed)
-        const key = apiKey || process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY;
+        const key = apiKey || process.env.GROQ_API_KEY;
 
-        // Hardcode the user provided key if env lookup fails (Temporary fix for this session)
-        const effectiveKey = key || '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';
-
-        if (!effectiveKey) {
-            throw new Error('GROQ_API_KEY environment variable is not set');
+        if (!key) {
+            throw new Error('GROQ_API_KEY environment variable is not set. Please add it to your .env file.');
         }
-        groqInstance = new GroqClient({ apiKey: effectiveKey });
+        groqInstance = new GroqClient({ apiKey: key });
     }
     return groqInstance;
 }
