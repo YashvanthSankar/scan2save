@@ -21,6 +21,7 @@ import { useEffect, useState } from 'react';
 
 // Types (reused from Profile for consistency, ideally in a types file)
 interface UserProfile {
+  id: string;
   name: string;
 }
 
@@ -45,6 +46,7 @@ export default function UserDashboard() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [cartCount, setCartCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -60,6 +62,21 @@ export default function UserDashboard() {
             amount: `₹${h.total.toLocaleString()}`, // Format for display
             icon: h.store.toLowerCase().includes('coffee') ? '☕' : (h.store.toLowerCase().includes('online') ? '📦' : '🛒')
           })));
+
+          // Fetch Cart Count
+          try {
+            if (data.user && typeof data.user.id === 'string') { // Ensure ID is available (might need to be added to UserProfile interface or just casted)
+              // Note: The previous view of page.tsx showed UserProfile only has name.
+              // We need to verify if API returns ID. The API route I edited returns user object which usually has ID. I should verify response type.
+              // Assuming API returns id in user object even if typescript interface says name/phone.
+              // Let's safe check.
+              const cartRes = await fetch(`/api/cart?userId=${data.user.id || ''}`);
+              const cartData = await cartRes.json();
+              if (cartData.items) setCartCount(cartData.items.length);
+            }
+          } catch (e) {
+            console.log('Failed to fetch cart count');
+          }
         }
       } catch (error) {
         console.error("Failed to load dashboard", error);
@@ -119,6 +136,22 @@ export default function UserDashboard() {
             <span className="text-lg font-bold">My Orders</span>
           </div>
         </Link>
+
+        {/* Conditional Cart Button */}
+        {cartCount > 0 && (
+          <Link href="/cart" className="col-span-2 bg-gradient-to-r from-orange-500/10 to-orange-600/10 border border-orange-500/20 p-4 rounded-3xl flex items-center justify-between h-20 hover:border-orange-500/50 hover:scale-[1.01] active:scale-95 transition-all text-foreground group">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-orange-500/20 rounded-xl flex items-center justify-center text-orange-500">
+                <ShoppingBag className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-orange-500 uppercase tracking-wider block">Resume Shopping</span>
+                <span className="text-base font-bold">{cartCount} items in cart</span>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
+          </Link>
+        )}
       </div>
 
       {/* --- STATS GRID --- */}

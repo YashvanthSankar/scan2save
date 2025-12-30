@@ -83,17 +83,11 @@ export default function LandingPage() {
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-300 opacity-0">
             <Link
-              href="/scan"
+              href="/login"
               className="w-full sm:w-auto px-8 py-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full font-bold flex items-center justify-center gap-2 transition-all hover:scale-105 shadow-[0_0_30px_rgba(79,70,229,0.3)]"
             >
               <Smartphone className="w-5 h-5" />
-              Launch Scanner
-            </Link>
-            <Link
-              href="/dashboard"
-              className="w-full sm:w-auto px-8 py-4 bg-secondary border border-border hover:bg-secondary/80 text-secondary-foreground rounded-full font-bold flex items-center justify-center gap-2 transition-all hover:scale-105"
-            >
-              View Dashboard <ArrowRight className="w-4 h-4" />
+              Scan & Save
             </Link>
           </div>
         </div>

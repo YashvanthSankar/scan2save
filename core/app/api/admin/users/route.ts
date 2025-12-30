@@ -21,9 +21,10 @@ export async function GET() {
         const usersWithStats = users.map(user => ({
             id: user.id,
             role: user.role,
-            phoneNumber: user.phoneNumber,
+            name: user.name, // Return name
+            phone: user.phoneNumber, // Map phoneNumber -> phone
             joinedAt: user.createdAt,
-            ordersCount: user._count?.transactions ?? 0
+            transactionCount: user._count?.transactions ?? 0 // Map ordersCount -> transactionCount
         }));
 
         return NextResponse.json({ success: true, users: usersWithStats });

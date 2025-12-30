@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { sendOTP, verifyOTP } from '@/lib/firebaseAuth';
-import { ScanLine, Smartphone, Lock, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
+import { ScanLine, Smartphone, Lock, Loader2, ArrowRight, ShieldCheck, ArrowLeft } from 'lucide-react';
 import type { ConfirmationResult } from 'firebase/auth';
 import { Suspense } from 'react';
 import Link from 'next/link';
@@ -194,6 +194,11 @@ function LoginContent() {
           )}
         </div>
       </div>
+
+      {/* Back to Home */}
+      <Link href="/" className="mt-8 text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 text-sm z-10">
+        <ArrowLeft className="w-4 h-4" /> Back to Home
+      </Link>
     </div>
   );
 }
