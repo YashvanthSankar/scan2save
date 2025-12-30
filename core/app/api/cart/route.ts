@@ -1,10 +1,6 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
   try {
@@ -18,34 +14,69 @@ export async function GET(request: Request) {
       );
     }
 
-    const { data: cart, error: cartError } = await supabase
-      .from('Cart')
-      .select('id, storeId, items:CartItem(id, quantity, product:Product(id, name, category, imageUrl))')
-      .eq('userId', userId)
-      .maybeSingle();
-
-    if (cartError) throw cartError;
+    const cart = await prisma.cart.findUnique({
+      where: { userId: userId },
+      include: {
+        items: {
+          include: {
+            product: true
+          },
+          orderBy: {
+            id: 'desc'
+          }
+        }
+      }
+    });
 
     if (!cart) {
       return NextResponse.json({ success: true, cart: null, items: [] });
     }
 
+    // Fetch pricing AND Active Offers for each item
     const itemsWithPricing = await Promise.all(
-      cart.items.map(async (item: any) => {
-        const { data: storeProduct } = await supabase
-          .from('StoreProduct')
-          .select('price, originalPrice')
-          .eq('storeId', cart.storeId)
-          .eq('productId', item.product.id)
-          .single();
+      cart.items.map(async (item) => {
+        const storeProduct = await prisma.storeProduct.findUnique({
+          where: {
+            storeId_productId: {
+              storeId: cart.storeId,
+              productId: item.productId
+            }
+          },
+          select: {
+            price: true
+          }
+        });
+
+        // Check for active offer
+        const offer = await prisma.activeOffer.findFirst({
+          where: {
+            productId: item.productId,
+            validUntil: { gt: new Date() }
+          }
+        });
+
+        let finalPrice = parseFloat(storeProduct?.price?.toString() || '0');
+        const originalPrice = finalPrice;
+
+        if (offer) {
+          const discountMultiplier = (100 - offer.discountPercentage) / 100;
+          finalPrice = Math.round(originalPrice * discountMultiplier);
+        }
 
         return {
-          ...item,
-          price: parseFloat(storeProduct?.price || 0),
-          originalPrice: parseFloat(storeProduct?.originalPrice || 0),
+          id: item.id,
+          storeId: cart.storeId,
+          productId: item.product.id,
+          name: item.product.name,
+          price: finalPrice,
+          originalPrice: originalPrice, // Pass original for UI strikethrough
+          quantity: item.quantity,
+          image: item.product.imageUrl,
+          discountLabel: offer ? `${offer.discountPercentage}% OFF` : null
         };
       })
     );
+
 
     return NextResponse.json({
       success: true,
@@ -55,6 +86,7 @@ export async function GET(request: Request) {
       },
       items: itemsWithPricing,
     });
+
   } catch (error) {
     console.error('Error fetching cart:', error);
     return NextResponse.json(
@@ -76,50 +108,72 @@ export async function POST(request: Request) {
       );
     }
 
-    let { data: cart } = await supabase
-      .from('Cart')
-      .select('id')
-      .eq('userId', userId)
-      .maybeSingle();
+    // 1. Get or Create Cart
+    let cart = await prisma.cart.findUnique({
+      where: { userId: userId }
+    });
 
     if (!cart) {
-      const { data: newCart, error: createError } = await supabase
-        .from('Cart')
-        .insert({ userId: userId, storeId: storeId })
-        .select()
-        .single();
+      // Check if storeId is a slug or UUID
+      let targetStoreId = storeId;
+      const store = await prisma.store.findFirst({
+        where: {
+          OR: [
+            { id: storeId },
+            { storeId: storeId }
+          ]
+        }
+      });
 
-      if (createError) throw createError;
-      cart = newCart;
+      if (store) {
+        targetStoreId = store.id;
+      } else {
+        return NextResponse.json({ success: false, error: 'Invalid Store ID' }, { status: 400 });
+      }
+
+      // Create Cart
+      cart = await prisma.cart.create({
+        data: {
+          userId: userId,
+          storeId: targetStoreId
+        }
+      });
     }
 
-    const { data: existingItem } = await supabase
-      .from('CartItem')
-      .select('id, quantity')
-      .eq('cartId', cart!.id)
-      .eq('productId', productId)
-      .maybeSingle();
+    // 2. Add or Update Item
+    const existingItem = await prisma.cartItem.findFirst({
+      where: {
+        cartId: cart.id,
+        productId: productId
+      }
+    });
 
     if (existingItem) {
-      const { error: updateError } = await supabase
-        .from('CartItem')
-        .update({ quantity: existingItem.quantity + quantity })
-        .eq('id', existingItem.id);
-
-      if (updateError) throw updateError;
-    } else {
-      const { error: insertError } = await supabase
-        .from('CartItem')
-        .insert({
-          cartId: cart!.id,
-          productId: productId,
-          quantity: quantity,
+      const newQuantity = existingItem.quantity + quantity;
+      if (newQuantity <= 0) {
+        await prisma.cartItem.delete({
+          where: { id: existingItem.id }
         });
-
-      if (insertError) throw insertError;
+      } else {
+        await prisma.cartItem.update({
+          where: { id: existingItem.id },
+          data: { quantity: newQuantity }
+        });
+      }
+    } else {
+      if (quantity > 0) {
+        await prisma.cartItem.create({
+          data: {
+            cartId: cart.id,
+            productId: productId,
+            quantity: quantity
+          }
+        });
+      }
     }
 
     return NextResponse.json({ success: true });
+
   } catch (error) {
     console.error('Error adding to cart:', error);
     return NextResponse.json(
@@ -141,14 +195,12 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const { error } = await supabase
-      .from('CartItem')
-      .delete()
-      .eq('id', itemId);
-
-    if (error) throw error;
+    await prisma.cartItem.delete({
+      where: { id: parseInt(itemId) }
+    });
 
     return NextResponse.json({ success: true });
+
   } catch (error) {
     console.error('Error removing from cart:', error);
     return NextResponse.json(

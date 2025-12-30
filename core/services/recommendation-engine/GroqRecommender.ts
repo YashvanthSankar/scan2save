@@ -1,14 +1,14 @@
 /**
- * GeminiRecommender - LLM-Powered Recommendation Engine
+ * GroqRecommender - LLM-Powered Recommendation Engine
  * 
- * Uses Google Gemini AI to:
+ * Uses Groq AI (Llama 3) to:
  * 1. Analyze purchase patterns with natural language understanding
  * 2. Generate personalized persona descriptions
  * 3. Match offers with intelligent reasoning
  * 4. Provide human-readable explanations for recommendations
  */
 
-import { GeminiClient, getGeminiClient } from './GeminiClient';
+import { GroqClient, getGroqClient } from './GroqClient';
 import {
     PurchaseHistoryItem,
     ActiveOffer,
@@ -39,11 +39,11 @@ interface AIRecommendationResponse {
     summary: string;
 }
 
-export class GeminiRecommender {
-    private client: GeminiClient;
+export class GroqRecommender {
+    private client: GroqClient;
 
     constructor(apiKey?: string) {
-        this.client = getGeminiClient(apiKey);
+        this.client = getGroqClient(apiKey);
     }
 
     /**
@@ -240,4 +240,4 @@ Order recommendations by relevance. Include at least 3 offers if available.`;
     }
 }
 
-export default GeminiRecommender;
+export default GroqRecommender;

@@ -12,6 +12,7 @@ const DEMO_USER_ID = '00000000-0000-0000-0000-000000000002';
 
 interface CartItem {
     id: number; // This is now the CartItem ID from DB
+    storeId?: string; // Optional because optimistic updates might not have it immediately
     productId: number;
     name: string;
     price: number;
@@ -23,6 +24,7 @@ interface CartContextType {
     items: CartItem[];
     addItem: (product: { id: number; name: string; price: number; image?: string }, storeId: string) => Promise<void>;
     removeItem: (cartItemId: number) => Promise<void>;
+    decrementItem: (productId: number) => Promise<void>;
     totalItems: number;
     totalAmount: number;
     loading: boolean;
@@ -45,14 +47,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             const res = await fetch(`/api/cart?userId=${DEMO_USER_ID}`);
             const data = await res.json();
             if (data.success && data.items) {
-                // Map API response to our CartItem shape
+                // API returns flat items: { id, storeId, productId, name, price, quantity, image }
                 const mappedItems = data.items.map((item: any) => ({
-                    id: item.id, // CartItem ID
-                    productId: item.product.id,
-                    name: item.product.name,
+                    id: item.id,
+                    storeId: item.storeId || data.cart?.storeId,
+                    productId: item.productId,
+                    name: item.name,
                     price: item.price,
                     quantity: item.quantity,
-                    image: item.product.image_url
+                    image: item.image
                 }));
                 setItems(mappedItems);
             }
@@ -93,7 +96,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 })
             });
 
-            if (!res.ok) throw new Error('Failed to add item');
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || 'Failed to add item');
+            }
 
             // Refresh cart to get real IDs and synced state
             await fetchCart();
@@ -121,11 +127,49 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const decrementItem = async (productId: number) => {
+        const item = items.find(i => i.productId === productId);
+        if (!item) return;
+
+        if (item.quantity > 1) {
+            // Optimistic Decrement
+            setItems(prev => prev.map(i => i.productId === productId ? { ...i, quantity: i.quantity - 1 } : i));
+
+            // API Call would ideally be "update quantity" but for now reusing add with negative? 
+            // Or better: Implement proper update or just re-use POST with quantity: -1 if the API supports it.
+            // Looking at api/cart/route.ts:
+            // It does: `update({ quantity: existingItem.quantity + quantity })`
+            // So sending quantity: -1 should work!
+
+            try {
+                const res = await fetch('/api/cart', {
+                    method: 'POST', // Using POST to update
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: DEMO_USER_ID,
+                        // storeId not strictly needed for update but validation might check it
+                        storeId: items[0]?.storeId || '',
+                        productId: productId,
+                        quantity: -1
+                    })
+                });
+                if (!res.ok) throw new Error('Failed to decrement');
+                await fetchCart(); // Sync
+            } catch (err) {
+                console.error(err);
+                fetchCart();
+            }
+        } else {
+            // Remove if quantity is 1
+            await removeItem(item.id);
+        }
+    };
+
     const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
     const totalAmount = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
     return (
-        <CartContext.Provider value={{ items, addItem, removeItem, totalItems, totalAmount, loading }}>
+        <CartContext.Provider value={{ items, addItem, removeItem, decrementItem, totalItems, totalAmount, loading }}>
             {children}
         </CartContext.Provider>
     );

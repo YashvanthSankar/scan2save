@@ -44,6 +44,7 @@ model Store {
   
   products     StoreProduct[] // Inventory specific to this store
   transactions Transaction[]  // Sales at this store
+  carts        Cart[]         // Carts active in this store
   claimedOffers ClaimedOffer[]
   
   createdAt DateTime @default(now())
@@ -146,6 +147,10 @@ model Cart {
   id        String     @id @default(uuid())
   userId    String     @unique
   user      User       @relation(fields: [userId], references: [id])
+  
+  storeId   String
+  store     Store      @relation(fields: [storeId], references: [id])
+  
   items     CartItem[]
   updatedAt DateTime   @updatedAt
 }

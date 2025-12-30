@@ -1,24 +1,24 @@
 /**
  * AI Recommendation Engine - Main Entry Point
  * 
- * This engine uses Google Gemini AI to analyze purchase patterns
+ * This engine uses Groq AI (Llama 3) to analyze purchase patterns
  * and generate personalized offer recommendations.
  * 
  * Usage:
  * ```typescript
- * import { GeminiRecommender } from '@/services/recommendation-engine';
+ * import { GroqRecommender } from '@/services/recommendation-engine';
  * 
- * const ai = new GeminiRecommender();
+ * const ai = new GroqRecommender();
  * const result = await ai.getAIRecommendations(user.purchaseHistory, offers, store);
  * ```
  */
 
 // Main AI Recommender
-export { GeminiRecommender } from './GeminiRecommender';
-export { GeminiClient, getGeminiClient } from './GeminiClient';
+export { GroqRecommender } from './GroqRecommender';
+export { GroqClient, getGroqClient } from './GroqClient';
 
 // Type exports
 export * from './types';
 
 // Default export
-export { GeminiRecommender as default } from './GeminiRecommender';
+export { GroqRecommender as default } from './GroqRecommender';

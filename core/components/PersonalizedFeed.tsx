@@ -14,6 +14,7 @@ import {
     ArrowRight
 } from 'lucide-react';
 import Link from 'next/link';
+import { useCart } from '@/lib/CartContext';
 
 interface Offer {
     id: number;
@@ -35,6 +36,7 @@ export default function PersonalizedFeed({ storeId }: { storeId: string }) {
     const [persona, setPersona] = useState<string>('');
     const [claimedOffers, setClaimedOffers] = useState<Record<number, string>>({});
     const [claiming, setClaiming] = useState<number | null>(null);
+    const { items, addItem, decrementItem } = useCart();
 
     useEffect(() => {
         const fetchOffers = async () => {
@@ -45,7 +47,7 @@ export default function PersonalizedFeed({ storeId }: { storeId: string }) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         qrPayload: { storeId: storeId, timestamp: Date.now(), name: 'Store' },
-                        userId: "user-1", // Demo User
+                        userId: "00000000-0000-0000-0000-000000000002", // Consistent Demo User
                     })
                 });
 
@@ -167,23 +169,59 @@ export default function PersonalizedFeed({ storeId }: { storeId: string }) {
                                     </div>
 
                                     <div className="mt-3">
-                                        {isClaimed ? (
-                                            <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-xl p-2 flex items-center justify-between w-full">
-                                                <div className="flex items-center gap-2 overflow-hidden">
-                                                    <Ticket className="w-4 h-4 text-emerald-400 shrink-0" />
-                                                    <span className="font-mono text-emerald-400 font-bold text-sm truncate">{discountCode}</span>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <button
-                                                onClick={() => handleClaim(offer.id)}
-                                                disabled={claiming === offer.id}
-                                                className="w-full bg-white text-black hover:bg-slate-200 active:scale-95 transition-all py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2"
-                                            >
-                                                {claiming === offer.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <ShoppingBag className="w-3 h-3" />}
-                                                {claiming === offer.id ? 'CLAIMING...' : 'CLAIM OFFER'}
-                                            </button>
-                                        )}
+                                        {(() => {
+                                            const cartItem = items.find(i => i.productId === offer.product.id);
+                                            const quantity = cartItem?.quantity || 0;
+
+                                            if (quantity > 0) {
+                                                return (
+                                                    <div className="flex items-center justify-between bg-slate-800 rounded-xl p-1 border border-indigo-500/50">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); decrementItem(offer.product.id); }}
+                                                            className="w-8 h-8 flex items-center justify-center bg-slate-700 text-white rounded-lg active:scale-95 transition-all hover:bg-slate-600"
+                                                        >
+                                                            -
+                                                        </button>
+                                                        <span className="font-bold text-white text-sm">{quantity}</span>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                addItem({
+                                                                    id: offer.product.id,
+                                                                    name: offer.product.name,
+                                                                    price: 0, // Price handled by backend/store context usually 
+                                                                    image: offer.product.imageUrl || undefined
+                                                                }, storeId);
+                                                            }}
+                                                            className="w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-lg active:scale-95 transition-all hover:bg-indigo-500"
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                );
+                                            }
+
+                                            return (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        // Auto-claim + Add to Cart
+                                                        handleClaim(offer.id);
+                                                        addItem({
+                                                            id: offer.product.id,
+                                                            name: offer.product.name,
+                                                            price: 0, // Demo: real app fetches price
+                                                            image: offer.product.imageUrl || undefined
+                                                        }, storeId);
+                                                    }}
+                                                    disabled={claiming === offer.id}
+                                                    className="w-full bg-white text-black hover:bg-slate-200 active:scale-95 transition-all py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2"
+                                                >
+                                                    {claiming === offer.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <ShoppingBag className="w-3 h-3" />}
+                                                    {claiming === offer.id ? 'ADDING...' : 'ADD TO CART'}
+                                                </button>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                             </div>

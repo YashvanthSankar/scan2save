@@ -5,13 +5,16 @@ import { ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
+import { usePathname } from 'next/navigation';
+
 export default function FloatingCart() {
     const { totalItems } = useCart();
+    const pathname = usePathname();
     const [isVisible, setIsVisible] = useState(false);
     const [animate, setAnimate] = useState(false);
 
     useEffect(() => {
-        if (totalItems > 0) {
+        if (totalItems > 0 && pathname !== '/cart') {
             setIsVisible(true);
             setAnimate(true);
             const timer = setTimeout(() => setAnimate(false), 300); // Reset animation class
@@ -19,7 +22,7 @@ export default function FloatingCart() {
         } else {
             setIsVisible(false);
         }
-    }, [totalItems]);
+    }, [totalItems, pathname]);
 
     if (!isVisible) return null;
 

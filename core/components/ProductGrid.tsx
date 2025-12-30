@@ -1,7 +1,8 @@
 'use client';
 
-import { Tag, Map, ArrowRight } from 'lucide-react';
+import { Tag, Map, Minus, Plus } from 'lucide-react';
 import Link from 'next/link';
+import { useCart } from '@/lib/CartContext';
 
 interface Product {
     id: number;
@@ -14,19 +15,21 @@ interface Product {
     description?: string;
 }
 
-import { useCart } from '@/lib/CartContext';
-
 export default function ProductGrid({ products, storeId }: { products: Product[], storeId: string }) {
-    const { addItem } = useCart();
+    const { items, addItem, decrementItem } = useCart();
 
-    const handleAddToCart = (product: Product) => {
+    const getQuantity = (productId: number) => {
+        const cartItem = items.find(i => i.productId === productId);
+        return cartItem?.quantity || 0;
+    };
+
+    const handleAdd = (product: Product) => {
         addItem({
             id: product.id,
             name: product.name,
             price: product.price,
             image: product.image
         }, storeId);
-        // Optional: Toast notification could go here
     };
 
     return (
@@ -34,6 +37,7 @@ export default function ProductGrid({ products, storeId }: { products: Product[]
             {products.map((product) => {
                 const savings = product.originalPrice - product.price;
                 const discountPercent = Math.round((savings / product.originalPrice) * 100);
+                const quantity = getQuantity(product.id);
 
                 return (
                     <div key={product.id} className="group block h-full select-none">
@@ -78,12 +82,32 @@ export default function ProductGrid({ products, storeId }: { products: Product[]
                                         )}
                                         <div className="text-base font-bold text-foreground">₹{product.price.toLocaleString()}</div>
                                     </div>
-                                    <button
-                                        onClick={() => handleAddToCart(product)}
-                                        className="bg-primary hover:bg-primary/90 text-primary-foreground h-9 px-4 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center justify-center"
-                                    >
-                                        ADD
-                                    </button>
+
+                                    {/* Swiggy/Zomato Style Button */}
+                                    {quantity > 0 ? (
+                                        <div className="flex items-center bg-primary rounded-xl overflow-hidden shadow-md">
+                                            <button
+                                                onClick={() => decrementItem(product.id)}
+                                                className="w-8 h-9 flex items-center justify-center text-primary-foreground hover:bg-primary/80 transition-colors active:scale-95"
+                                            >
+                                                <Minus className="w-4 h-4" />
+                                            </button>
+                                            <span className="w-6 text-center font-bold text-primary-foreground text-sm">{quantity}</span>
+                                            <button
+                                                onClick={() => handleAdd(product)}
+                                                className="w-8 h-9 flex items-center justify-center text-primary-foreground hover:bg-primary/80 transition-colors active:scale-95"
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleAdd(product)}
+                                            className="bg-primary hover:bg-primary/90 text-primary-foreground h-9 px-4 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center justify-center"
+                                        >
+                                            ADD
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>

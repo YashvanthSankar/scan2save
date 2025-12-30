@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { getGeminiClient } from '@/services/recommendation-engine/GeminiClient';
+import { getGroqClient } from '@/services/recommendation-engine/GroqClient';
 
 // Use a global prisma instance to prevent connection exhaustion in dev
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
@@ -41,14 +41,14 @@ export async function POST(request: Request) {
         });
 
         // 4. PERSONALIZATION LOGIC
-        if (hasHistory && process.env.GEMINI_API_KEY) {
+        if (hasHistory) { // Try personalization if history exists
             try {
                 // A. Prepare Context for AI
                 const purchaseHistory = userTransactions.flatMap(tx => tx.items.map(i => i.product.name)).join(', ');
                 const availableOffers = allOffers.map(o => ({ id: o.id, title: o.title, category: o.category }));
 
-                // B. Call Gemini
-                const gemini = getGeminiClient();
+                // B. Call Groq
+                const groq = getGroqClient();
                 const prompt = `
                     User History: ${purchaseHistory}
                     Available Offers: ${JSON.stringify(availableOffers)}
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
                     Return JSON: { "offerIds": [1, 2, 3], "persona": "e.g. Health Nut", "reason": "Why these match" }
                 `;
 
-                const aiResponse = await gemini.generateJSON<{ offerIds: number[], persona: string, reason: string }>(prompt);
+                const aiResponse = await groq.generateJSON<{ offerIds: number[], persona: string, reason: string }>(prompt);
 
                 // C. Filter Offers based on AI selection
                 recommendedOffers = allOffers

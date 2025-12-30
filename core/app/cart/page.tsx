@@ -1,29 +1,18 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Trash2, CreditCard, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Trash2, CreditCard, CheckCircle2, Minus, Plus, ShoppingBag } from 'lucide-react';
+import { useCart } from '@/lib/CartContext';
+import { useState } from 'react';
 
 export default function CartPage() {
+  const { items, removeItem, addItem, decrementItem, totalItems, totalAmount, loading } = useCart();
   const [checkoutStep, setCheckoutStep] = useState<'cart' | 'success'>('cart');
 
-  // Hardcoded for demo - normally you'd use a Context or Redux here
-  const [cartItems, setCartItems] = useState([
-    {
-      id: "1",
-      name: "Sony WH-1000XM5",
-      price: 26990,
-      image: "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=500&q=80",
-      quantity: 1
-    }
-  ]);
-
-  const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const tax = subtotal * 0.18;
-  const total = subtotal + tax;
+  const tax = totalAmount * 0.18;
+  const total = totalAmount + tax;
 
   const handleCheckout = () => {
-    // Simulate processing
     setCheckoutStep('success');
   };
 
@@ -35,7 +24,7 @@ export default function CartPage() {
         </div>
         <h1 className="text-3xl font-bold mb-2">Order Confirmed!</h1>
         <p className="text-muted-foreground max-w-md mb-8">
-          Your order #8842 has been placed successfully. You will receive an email confirmation shortly.
+          Your order has been placed successfully. You will receive a confirmation shortly.
         </p>
         <Link href="/" className="bg-primary text-primary-foreground px-8 py-3 rounded-full font-bold hover:bg-primary/90 transition-colors">
           Continue Shopping
@@ -44,74 +33,134 @@ export default function CartPage() {
     );
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen text-foreground p-6 md:p-12 font-sans relative">
-      <Link href="/" className="flex items-center text-muted-foreground hover:text-foreground mb-8 transition-colors">
+      <Link href="/dashboard" className="flex items-center text-muted-foreground hover:text-foreground mb-8 transition-colors">
         <ArrowLeft className="w-4 h-4 mr-2" /> Continue Shopping
       </Link>
 
-      <h1 className="text-3xl font-bold mb-8">Your Cart</h1>
+      <h1 className="text-3xl font-bold mb-8 flex items-center gap-3">
+        <ShoppingBag className="w-8 h-8" />
+        Your Cart
+        {totalItems > 0 && (
+          <span className="bg-primary text-primary-foreground text-sm px-3 py-1 rounded-full">
+            {totalItems} items
+          </span>
+        )}
+      </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-4">
-          {cartItems.map((item) => (
+          {items.map((item) => (
             <div key={item.id} className="flex gap-4 bg-card/40 backdrop-blur-md border border-border p-4 rounded-xl shadow-sm">
               <div className="w-24 h-24 bg-muted rounded-lg overflow-hidden flex-shrink-0">
-                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                <img
+                  src={item.image || `https://placehold.co/200x200/1e293b/ffffff?text=${encodeURIComponent(item.name.substring(0, 2))}`}
+                  alt={item.name}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="flex-1 flex flex-col justify-between">
                 <div className="flex justify-between items-start">
-                  <h3 className="font-semibold text-foreground">{item.name}</h3>
-                  <p className="font-bold text-foreground">₹{item.price.toLocaleString()}</p>
+                  <div>
+                    <h3 className="font-semibold text-foreground">{item.name}</h3>
+                    {/* Discount Label */}
+                    {(item as any).discountLabel && (
+                      <span className="text-[10px] font-bold bg-red-500 text-white px-2 py-0.5 rounded-full inline-block mt-1">
+                        {(item as any).discountLabel}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    {/* Strikethrough Original Price */}
+                    {(item as any).originalPrice > item.price && (
+                      <p className="text-xs text-muted-foreground line-through decoration-red-500/50">
+                        ₹{((item as any).originalPrice * item.quantity).toLocaleString()}
+                      </p>
+                    )}
+                    <p className="font-bold text-foreground">₹{(item.price * item.quantity).toLocaleString()}</p>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center text-muted-foreground text-sm">
-                  <span>Qty: {item.quantity}</span>
-                  <button className="text-red-500 hover:text-red-600 flex items-center gap-1 transition-colors">
+                <div className="flex justify-between items-center">
+                  {/* Swiggy-style Quantity Controls */}
+                  <div className="flex items-center gap-1 bg-primary/10 rounded-lg border border-primary/30">
+                    <button
+                      onClick={() => decrementItem(item.productId)}
+                      className="w-8 h-8 flex items-center justify-center text-primary hover:bg-primary/20 rounded-l-lg transition-colors"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="w-8 text-center font-bold text-foreground">{item.quantity}</span>
+                    <button
+                      onClick={() => addItem({ id: item.productId, name: item.name, price: item.price, image: item.image }, item.storeId || '')}
+                      className="w-8 h-8 flex items-center justify-center text-primary hover:bg-primary/20 rounded-r-lg transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    className="text-red-500 hover:text-red-600 flex items-center gap-1 transition-colors text-sm"
+                  >
                     <Trash2 className="w-4 h-4" /> Remove
                   </button>
                 </div>
               </div>
             </div>
           ))}
-          {cartItems.length === 0 && (
+          {items.length === 0 && (
             <div className="text-center py-12 bg-card/40 rounded-xl border border-border">
-              <p className="text-muted-foreground">Your cart is empty.</p>
+              <ShoppingBag className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground text-lg">Your cart is empty.</p>
+              <Link href="/scan" className="inline-block mt-4 bg-primary text-primary-foreground px-6 py-2 rounded-full font-bold">
+                Scan a Store QR
+              </Link>
             </div>
           )}
         </div>
 
         {/* Summary */}
-        <div className="bg-card/40 backdrop-blur-md border border-border p-6 rounded-2xl h-fit shadow-lg">
-          <h2 className="text-xl font-bold mb-6 text-foreground">Order Summary</h2>
-          <div className="space-y-3 text-sm text-muted-foreground">
-            <div className="flex justify-between">
-              <span>Subtotal</span>
-              <span>₹{subtotal.toLocaleString()}</span>
+        {items.length > 0 && (
+          <div className="bg-card/40 backdrop-blur-md border border-border p-6 rounded-2xl h-fit shadow-lg">
+            <h2 className="text-xl font-bold mb-6 text-foreground">Order Summary</h2>
+            <div className="space-y-3 text-sm text-muted-foreground">
+              <div className="flex justify-between">
+                <span>Subtotal ({totalItems} items)</span>
+                <span>₹{totalAmount.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>GST (18%)</span>
+                <span>₹{tax.toLocaleString()}</span>
+              </div>
+              <div className="h-px bg-border my-4" />
+              <div className="flex justify-between text-foreground text-lg font-bold">
+                <span>Total</span>
+                <span>₹{total.toLocaleString()}</span>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span>GST (18%)</span>
-              <span>₹{tax.toLocaleString()}</span>
-            </div>
-            <div className="h-px bg-border my-4" />
-            <div className="flex justify-between text-foreground text-lg font-bold">
-              <span>Total</span>
-              <span>₹{total.toLocaleString()}</span>
-            </div>
-          </div>
 
-          <button
-            onClick={handleCheckout}
-            disabled
-            className="w-full mt-8 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl flex flex-col items-center justify-center gap-1 transition-all opacity-80 cursor-not-allowed shadow-md"
-          >
-            <span className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5" />
-              Pay ₹{total.toLocaleString()}
-            </span>
-            <span className="text-xs font-normal opacity-70">🚀 Payment Gateway Coming Soon!</span>
-          </button>
-        </div>
+            <button
+              onClick={handleCheckout}
+              disabled
+              className="w-full mt-8 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl flex flex-col items-center justify-center gap-1 transition-all opacity-80 cursor-not-allowed shadow-md"
+            >
+              <span className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5" />
+                Pay ₹{total.toLocaleString()}
+              </span>
+              <span className="text-xs font-normal opacity-70">🚀 Payment Gateway Coming Soon!</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
