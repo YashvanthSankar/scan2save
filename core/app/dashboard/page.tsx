@@ -10,7 +10,9 @@ import {
   Clock,
   ChevronRight,
   ShoppingBag,
-  Zap
+  Zap,
+  User,
+  Package
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -28,8 +30,6 @@ export default function UserDashboard() {
   return (
     <div className="min-h-screen text-foreground font-sans pb-32 overflow-x-hidden selection:bg-emerald-500/30">
 
-
-
       {/* --- HEADER --- */}
       <div className="relative z-10 px-6 pt-12 pb-6 flex justify-between items-end">
         <div>
@@ -38,12 +38,40 @@ export default function UserDashboard() {
             {user.name}
           </h1>
         </div>
+        <Link href="/profile" className="p-2 -mr-2 rounded-full hover:bg-muted/50 transition-colors">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg border border-white/10">
+            <User className="w-5 h-5" />
+          </div>
+        </Link>
       </div>
 
-      {/* --- BENTO GRID LAYOUT --- */}
-      <div className="relative z-10 px-4 grid grid-cols-2 gap-3">
+      {/* --- QUICK ACTIONS ROW --- */}
+      <div className="px-6 mb-8 grid grid-cols-2 gap-3">
+        <Link href="/scan" className="col-span-1 bg-primary text-primary-foreground p-4 rounded-3xl flex flex-col justify-between h-32 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-[1.02] active:scale-95 transition-all relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-8 -mt-8 blur-2xl group-hover:bg-white/20 transition-colors" />
+          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+            <QrCode className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <span className="text-xs font-medium opacity-80 uppercase tracking-wider block mb-0.5">Start Here</span>
+            <span className="text-lg font-bold">Scan QR</span>
+          </div>
+        </Link>
 
-        {/* 1. Total Saved (Large Card - Spans 2 cols) */}
+        <Link href="/orders" className="col-span-1 bg-secondary border border-border p-4 rounded-3xl flex flex-col justify-between h-32 hover:border-primary/50 hover:scale-[1.02] active:scale-95 transition-all text-foreground group">
+          <div className="w-10 h-10 bg-background/50 rounded-xl flex items-center justify-center border border-border group-hover:border-primary/30 transition-colors">
+            <Package className="w-5 h-5 text-muted-foreground group-hover:text-primary" />
+          </div>
+          <div>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-0.5">History</span>
+            <span className="text-lg font-bold">My Orders</span>
+          </div>
+        </Link>
+      </div>
+
+      {/* --- STATS GRID --- */}
+      <div className="px-6 grid grid-cols-2 gap-3">
+        {/* 1. Total Saved */}
         <div className="col-span-2 glass-card rounded-3xl p-6 relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
           <div className="relative z-10 flex justify-between items-start">
@@ -61,7 +89,7 @@ export default function UserDashboard() {
               </p>
             </div>
 
-            {/* Sparkline Visual (CSS-based) */}
+            {/* Sparkline */}
             <div className="flex items-end gap-1 h-12 w-24 opacity-80">
               <div className="w-2 bg-indigo-500/30 rounded-t-sm h-[40%]" />
               <div className="w-2 bg-indigo-500/40 rounded-t-sm h-[60%]" />
@@ -73,21 +101,18 @@ export default function UserDashboard() {
           </div>
         </div>
 
-        {/* 2. Points (Small Card) */}
-        <div className="glass-card rounded-3xl p-5 flex flex-col justify-between h-36 relative overflow-hidden group hover:border-emerald-500/30 transition-colors">
-          <div className="absolute -right-4 -top-4 w-20 h-20 bg-emerald-500/20 blur-2xl rounded-full group-hover:bg-emerald-500/30 transition-colors" />
+        {/* 2. Points & Vouchers */}
+        <div className="col-span-1 glass-card rounded-3xl p-5 flex flex-col justify-between h-36 relative overflow-hidden hover:border-emerald-500/30 transition-colors">
           <div className="p-2 w-fit bg-emerald-500/10 rounded-xl mb-2">
             <Zap className="w-5 h-5 text-emerald-400 fill-emerald-400" />
           </div>
           <div>
             <span className="text-muted-foreground text-xs font-semibold">Rewards</span>
-            <p className="text-xl font-bold text-foreground mt-0.5">{user.points} pts</p>
+            <p className="text-xl font-bold text-foreground mt-0.5">{user.points}</p>
           </div>
         </div>
 
-        {/* 3. Wallet / Voucher (Small Card) */}
-        <div className="glass-card rounded-3xl p-5 flex flex-col justify-between h-36 relative overflow-hidden hover:border-purple-500/30 transition-colors">
-          <div className="absolute -left-4 -bottom-4 w-20 h-20 bg-purple-500/20 blur-2xl rounded-full" />
+        <div className="col-span-1 glass-card rounded-3xl p-5 flex flex-col justify-between h-36 relative overflow-hidden hover:border-purple-500/30 transition-colors">
           <div className="p-2 w-fit bg-purple-500/10 rounded-xl mb-2">
             <Wallet className="w-5 h-5 text-purple-400" />
           </div>
@@ -99,9 +124,9 @@ export default function UserDashboard() {
 
       </div>
 
-      {/* --- RECENT TRANSACTIONS (Pill Rows) --- */}
-      <div className="relative z-10 px-6 mt-8">
-        <h3 className="text-muted-foreground text-sm font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
+      {/* --- RECENT ACTIVITY --- */}
+      <div className="px-6 mt-8">
+        <h3 className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
           Recent Activity
           <div className="h-[1px] flex-1 bg-border" />
         </h3>
@@ -112,13 +137,13 @@ export default function UserDashboard() {
             { store: 'FreshMart', loc: 'Koramangala', time: 'Yesterday', amount: '₹1,240', icon: '🛒' },
             { store: 'Amazon Pay', loc: 'Online', time: '2 days ago', amount: '₹890', icon: '📦' },
           ].map((item, i) => (
-            <div key={i} className="group flex items-center justify-between p-1 pr-4 rounded-2xl bg-card/40 border border-border hover:bg-card/60 transition-all">
+            <div key={i} className="flex items-center justify-between p-1 pr-4 rounded-2xl bg-card/40 border border-border hover:bg-card/60 transition-all">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center text-xl shadow-inner">
                   {item.icon}
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{item.store}</h4>
+                  <h4 className="font-bold text-sm text-foreground">{item.store}</h4>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>{item.loc}</span>
                     <span className="w-1 h-1 rounded-full bg-muted-foreground" />
@@ -133,34 +158,6 @@ export default function UserDashboard() {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* --- FLOATING ACTION BUTTON (LENS STYLE) --- */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
-        <Link
-          href="/scan"
-          className="group relative flex items-center justify-center w-20 h-20 bg-secondary rounded-full border border-border shadow-[0_0_30px_rgba(0,0,0,0.2)] dark:shadow-[0_0_30px_rgba(0,0,0,0.5)] transition-all hover:scale-105 active:scale-95"
-        >
-          {/* Outer Glow Ring */}
-          <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-pulse-glow" />
-
-          {/* Lens Body */}
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-secondary to-background flex items-center justify-center relative overflow-hidden shadow-inner">
-            {/* Lens Flare Effect */}
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent rounded-full" />
-
-            {/* Icon */}
-            <QrCode className="w-8 h-8 text-foreground z-10 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
-
-            {/* Inner Ring */}
-            <div className="absolute inset-2 border border-white/20 rounded-full" />
-          </div>
-
-          {/* Label (Optional tooltip or text below) */}
-          <div className="absolute -bottom-8 text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">
-            Scan
-          </div>
-        </Link>
       </div>
 
     </div>
