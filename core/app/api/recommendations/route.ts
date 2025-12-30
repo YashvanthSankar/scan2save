@@ -140,7 +140,7 @@ export async function GET(request: Request) {
       };
     });
 
-    scoredOffers.sort((a, b) => b.relevanceScore - a.relevanceScore);
+    scoredOffers.sort((a: any, b: any) => b.relevanceScore - a.relevanceScore);
 
     const recommendations = scoredOffers.slice(0, 10);
 
@@ -156,7 +156,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       recommendations,
-      userPersonas: userPersonas.map((p) => ({
+      userPersonas: userPersonas.map((p: any) => ({
         type: p.persona_type,
         confidence: p.confidence_score,
       })),
