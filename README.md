@@ -2,9 +2,9 @@
 
 **Retail, Reimagined for the AI Era.**
 
-> One scan unlocks a universe of personalized deals — no apps, no cards, no friction.
+> Walk into any store, scan the QR, and unlock personalized offers designed just for you.
 
-Scan2Save transforms physical retail with adaptive intelligence. Our ML-powered recommendation engine learns shopper preferences in real-time, surfacing offers that actually matter while they browse. Walk into any store, scan the QR, and experience shopping that feels like it was designed just for you. Checkout happens in seconds, not minutes.
+Scan2Save transforms physical retail with adaptive intelligence. Our ML-powered recommendation engine learns shopper preferences in real-time, surfacing offers that actually matter while they browse. Checkout happens in seconds, not minutes.
 
 **This is shopping, evolved.**
 
@@ -83,6 +83,15 @@ scan2save/
 - Node.js 18+
 - PostgreSQL database (Supabase recommended)
 - Firebase project (for OTP authentication)
+
+### Demo Credentials
+
+For testing the application:
+
+| Field | Value |
+|-------|-------|
+| **Phone** | `+91 9696969696` |
+| **OTP** | `000000` |
 
 ### Installation
 

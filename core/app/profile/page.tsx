@@ -200,21 +200,6 @@ export default function ProfilePage() {
           {/* Theme Toggle */}
           <ThemeToggleRow />
 
-          <button className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground">
-            <div className="flex items-center gap-3">
-              <Settings size={20} />
-              <span>App Settings</span>
-            </div>
-            <ChevronRight size={16} className="text-muted-foreground" />
-          </button>
-          <button className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground">
-            <div className="flex items-center gap-3">
-              <Receipt size={20} />
-              <span>Tax Invoices</span>
-            </div>
-            <ChevronRight size={16} className="text-muted-foreground" />
-          </button>
-
           {/* LOGOUT BUTTON */}
           <button
             onClick={async () => {

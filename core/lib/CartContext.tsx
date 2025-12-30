@@ -2,14 +2,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Hardcoded for Demo (matches seeded user)
-const DEMO_USER_ID = '00000000-0000-0000-0000-000000000002';
-
-// We need the Store ID to create a cart if it doesn't exist. 
-// For this demo, we can assume a default store or pass it when adding items.
-// Ideally, this comes from the current route, but Context is global.
-// We'll update addItem to accept storeId.
-
 interface CartItem {
     id: number; // This is now the CartItem ID from DB
     storeId?: string; // Optional because optimistic updates might not have it immediately
@@ -36,16 +28,32 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: React.ReactNode }) {
     const [items, setItems] = useState<CartItem[]>([]);
     const [loading, setLoading] = useState(false);
+    const [userId, setUserId] = useState<string | null>(null);
 
-    // Fetch Cart on Mount
+    // Fetch User ID on Mount, then fetch cart
     useEffect(() => {
-        fetchCart();
+        const initCart = async () => {
+            try {
+                // First get the current user's ID
+                const userRes = await fetch('/api/user/me');
+                const userData = await userRes.json();
+
+                if (userData.success && userData.user?.id) {
+                    setUserId(userData.user.id);
+                    // Now fetch cart with the real user ID
+                    await fetchCartForUser(userData.user.id);
+                }
+            } catch (error) {
+                console.error('Failed to init cart:', error);
+            }
+        };
+        initCart();
     }, []);
 
-    const fetchCart = async () => {
+    const fetchCartForUser = async (uid: string) => {
         try {
             setLoading(true);
-            const res = await fetch(`/api/cart?userId=${DEMO_USER_ID}`);
+            const res = await fetch(`/api/cart?userId=${uid}`);
             const data = await res.json();
             if (data.success && data.items) {
                 // API returns flat items: { id, storeId, productId, name, price, quantity, image }
@@ -67,7 +75,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const fetchCart = async () => {
+        if (userId) {
+            await fetchCartForUser(userId);
+        }
+    };
+
     const addItem = async (product: { id: number; name: string; price: number; image?: string }, storeId: string) => {
+        if (!userId) {
+            console.error('Cannot add item: User not logged in');
+            return;
+        }
+
         // Optimistic UI Update
         const tempId = Date.now(); // Temporary ID until we refresh
         setItems(prev => {
@@ -90,7 +109,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    userId: DEMO_USER_ID,
+                    userId: userId,
                     storeId: storeId,
                     productId: product.id,
                     quantity: 1
@@ -147,7 +166,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                     method: 'POST', // Using POST to update
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        userId: DEMO_USER_ID,
+                        userId: userId,
                         // storeId not strictly needed for update but validation might check it
                         storeId: items[0]?.storeId || '',
                         productId: productId,

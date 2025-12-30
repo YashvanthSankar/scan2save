@@ -2,15 +2,25 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, CreditCard, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, CreditCard, CheckCircle2, Loader2, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
 import { useRouter } from 'next/navigation';
+
+interface OrderResult {
+    id: string;
+    total: number;
+    gatePassToken: string;
+    store: string;
+    itemCount: number;
+}
 
 export default function CheckoutPage() {
     const router = useRouter();
     const { items, totalAmount, clearCart, loading } = useCart();
     const [processing, setProcessing] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [orderResult, setOrderResult] = useState<OrderResult | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     // Auto-redirect if empty (basic guard, though middleware handles auth)
     if (!loading && items.length === 0 && !success) {
@@ -22,30 +32,64 @@ export default function CheckoutPage() {
 
     const handlePayment = async () => {
         setProcessing(true);
-        // Simulate Payment Gateway
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        setError(null);
 
-        // Simulate Order Creation API
-        // await fetch('/api/orders', { method: 'POST', ... })
+        try {
+            // Simulate payment gateway delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
 
-        setSuccess(true);
-        clearCart();
-        setProcessing(false);
+            // Create order via API
+            const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const data = await res.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to create order');
+            }
+
+            setOrderResult(data.order);
+            setSuccess(true);
+            clearCart();
+
+        } catch (err: any) {
+            console.error('Payment error:', err);
+            setError(err.message || 'Payment failed. Please try again.');
+        } finally {
+            setProcessing(false);
+        }
     };
 
-    if (success) {
+    if (success && orderResult) {
         return (
             <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center font-sans animate-in zoom-in duration-500">
                 <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-emerald-500/30">
                     <CheckCircle2 className="w-12 h-12 text-white" />
                 </div>
                 <h1 className="text-3xl font-bold mb-2 text-foreground">Payment Successful!</h1>
-                <p className="text-muted-foreground max-w-md mb-8">
-                    Your order has been placed. You can view the details in your order history.
+                <p className="text-muted-foreground max-w-md mb-4">
+                    Your order of {orderResult.itemCount} items from {orderResult.store} has been placed.
                 </p>
-                <Link href="/orders" className="bg-primary text-primary-foreground px-8 py-3 rounded-full font-bold hover:bg-primary/90 transition-all shadow-lg hover:shadow-primary/25 hover:scale-105 active:scale-95">
-                    View My Orders
-                </Link>
+
+                {/* Gate Pass */}
+                <div className="bg-card/40 border border-emerald-500/30 rounded-2xl p-6 mb-8 max-w-sm w-full">
+                    <p className="text-sm text-muted-foreground mb-2">Your Exit Gate Pass</p>
+                    <p className="font-mono text-2xl font-bold text-foreground tracking-widest mb-2">
+                        {orderResult.gatePassToken}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Show this at the exit for verification</p>
+                </div>
+
+                <div className="flex gap-4">
+                    <Link href={`/orders/${orderResult.id}`} className="bg-primary text-primary-foreground px-6 py-3 rounded-full font-bold hover:bg-primary/90 transition-all shadow-lg hover:shadow-primary/25 hover:scale-105 active:scale-95">
+                        View Invoice
+                    </Link>
+                    <Link href="/orders" className="bg-muted text-foreground px-6 py-3 rounded-full font-bold hover:bg-muted/80 transition-all">
+                        All Orders
+                    </Link>
+                </div>
             </div>
         );
     }
@@ -130,6 +174,14 @@ export default function CheckoutPage() {
                                 </div>
                             </label>
                         </div>
+
+                        {/* Error Message */}
+                        {error && (
+                            <div className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-3 text-red-500">
+                                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                                <p className="text-sm">{error}</p>
+                            </div>
+                        )}
 
                         <button
                             onClick={handlePayment}
