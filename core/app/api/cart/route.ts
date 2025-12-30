@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 
     const { data: cart, error: cartError } = await supabase
       .from('Cart')
-      .select('id, storeId, items:cart_items(id, quantity, product:products(id, name, category, image_url))')
+      .select('id, storeId, items:CartItem(id, quantity, product:Product(id, name, category, imageUrl))')
       .eq('userId', userId)
       .maybeSingle();
 
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       cart.items.map(async (item: any) => {
         const { data: storeProduct } = await supabase
           .from('StoreProduct')
-          .select('price, original_price')
+          .select('price, originalPrice')
           .eq('storeId', cart.storeId)
           .eq('productId', item.product.id)
           .single();
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
         return {
           ...item,
           price: parseFloat(storeProduct?.price || 0),
-          originalPrice: parseFloat(storeProduct?.original_price || 0),
+          originalPrice: parseFloat(storeProduct?.originalPrice || 0),
         };
       })
     );

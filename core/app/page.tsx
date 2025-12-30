@@ -136,7 +136,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
             <ScanLine className="w-6 h-6 text-slate-600" />
-            <span className="font-bold text-slate-500">Scan2Save © 2024</span>
+            <span className="font-bold text-slate-500">Scan2Save © {new Date().getFullYear}</span>
           </div>
           <div className="flex gap-6 text-sm text-slate-500">
             <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
