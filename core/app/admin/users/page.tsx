@@ -1,86 +1,75 @@
 'use client';
 
-import { useState } from 'react';
-import { 
-  Search, 
-  MoreVertical, 
-  Shield, 
-  Mail, 
+import { useState, useEffect } from 'react';
+import {
+  Search,
+  Shield,
+  Phone,
   Calendar,
-  BrainCircuit,
-  Ban,
-  CheckCircle2
+  Loader2,
+  ShoppingBag
 } from 'lucide-react';
 
-export default function AdminUsersPage() {
-  // Mock User Data
-  const [users, setUsers] = useState([
-    {
-      id: "u_8832",
-      name: "Yashvanth S",
-      email: "yashvanth@example.com",
-      role: "Customer",
-      status: "Active",
-      joined: "Sept 12, 2025",
-      spent: 12450,
-      persona: "Tech Enthusiast"
-    },
-    {
-      id: "u_8833",
-      name: "Aditya Kumar",
-      email: "aditya.k@example.com",
-      role: "Customer",
-      status: "Active",
-      joined: "Oct 04, 2025",
-      spent: 4500,
-      persona: "Fitness Buff"
-    },
-    {
-      id: "u_8834",
-      name: "Sarah Jenkins",
-      email: "sarah.j@example.com",
-      role: "Customer",
-      status: "Inactive",
-      joined: "Nov 20, 2025",
-      spent: 0,
-      persona: "New Mom"
-    },
-    {
-      id: "u_8835",
-      name: "Admin User",
-      email: "admin@scan2save.com",
-      role: "Admin",
-      status: "Active",
-      joined: "Aug 01, 2025",
-      spent: 0,
-      persona: "System"
-    }
-  ]);
+interface User {
+  id: string;
+  phone: string;
+  name: string;
+  role: string;
+  joinedAt: string;
+  transactionCount: number;
+}
 
+export default function AdminUsersPage() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Filter logic
-  const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    u.email.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch('/api/admin/users');
+        const data = await res.json();
+        if (data.success) {
+          setUsers(data.users);
+        }
+      } catch (err) {
+        console.error('Failed to load users', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  const filteredUsers = users.filter(u =>
+    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.phone.includes(searchTerm)
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">User Management</h1>
-          <p className="text-slate-400">Monitor user activity and AI categorization.</p>
+          <p className="text-slate-400">View registered users and their activity.</p>
         </div>
-        
+
         {/* Search */}
         <div className="relative w-full md:w-96">
           <Search className="absolute left-3 top-3.5 w-5 h-5 text-slate-500" />
-          <input 
-            type="text" 
-            placeholder="Search by name or email..." 
+          <input
+            type="text"
+            placeholder="Search by name or phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-white focus:border-indigo-500 focus:outline-none transition-colors"
@@ -94,76 +83,68 @@ export default function AdminUsersPage() {
           <table className="w-full text-left text-sm text-slate-400">
             <thead className="bg-slate-950/50 text-slate-200 uppercase text-xs font-bold tracking-wider border-b border-slate-800">
               <tr>
-                <th className="px-6 py-4">User Identity</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">AI Persona</th>
-                <th className="px-6 py-4">Total Spent</th>
+                <th className="px-6 py-4">User</th>
+                <th className="px-6 py-4">Phone</th>
+                <th className="px-6 py-4">Role</th>
+                <th className="px-6 py-4">Transactions</th>
                 <th className="px-6 py-4">Joined</th>
-                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
               {filteredUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-slate-800/50 transition-colors group">
-                  
-                  {/* User Identity */}
+
+                  {/* User */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white font-bold shrink-0">
-                        {user.name.charAt(0)}
+                        {user.name.charAt(0).toUpperCase()}
                       </div>
-                      <div>
-                        <div className="font-bold text-white flex items-center gap-2">
-                          {user.name}
-                          {user.role === 'Admin' && (
-                            <Shield className="w-3 h-3 text-indigo-400" />
-                          )}
-                        </div>
-                        <div className="text-xs flex items-center gap-1 mt-0.5">
-                          <Mail className="w-3 h-3" /> {user.email}
-                        </div>
+                      <div className="font-bold text-white flex items-center gap-2">
+                        {user.name}
+                        {user.role === 'ADMIN' && (
+                          <Shield className="w-3 h-3 text-indigo-400" />
+                        )}
                       </div>
                     </div>
                   </td>
 
-                  {/* Status */}
+                  {/* Phone */}
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-                      user.status === 'Active' 
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                    <div className="flex items-center gap-2 font-mono">
+                      <Phone className="w-3 h-3" />
+                      {user.phone}
+                    </div>
+                  </td>
+
+                  {/* Role */}
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${user.role === 'ADMIN'
+                        ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
                         : 'bg-slate-700/50 text-slate-400 border-slate-600'
-                    }`}>
-                      {user.status === 'Active' ? <CheckCircle2 className="w-3 h-3" /> : <Ban className="w-3 h-3" />}
-                      {user.status}
+                      }`}>
+                      {user.role}
                     </span>
                   </td>
 
-                  {/* AI Persona */}
+                  {/* Transactions */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                        <BrainCircuit className="w-4 h-4 text-indigo-400" />
-                        <span className="text-white font-medium">{user.persona}</span>
+                      <ShoppingBag className="w-4 h-4 text-emerald-400" />
+                      <span className="text-white font-medium">{user.transactionCount}</span>
                     </div>
-                  </td>
-
-                  {/* Spent */}
-                  <td className="px-6 py-4 font-mono text-white">
-                    ₹{user.spent.toLocaleString()}
                   </td>
 
                   {/* Joined */}
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                        <Calendar className="w-3 h-3" />
-                        {user.joined}
+                    <div className="flex items-center gap-2 text-xs">
+                      <Calendar className="w-3 h-3" />
+                      {new Date(user.joinedAt).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
                     </div>
-                  </td>
-
-                  {/* Actions */}
-                  <td className="px-6 py-4 text-right">
-                    <button className="p-2 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-white transition-colors">
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
                   </td>
 
                 </tr>
@@ -171,11 +152,11 @@ export default function AdminUsersPage() {
             </tbody>
           </table>
         </div>
-        
+
         {filteredUsers.length === 0 && (
-            <div className="p-12 text-center text-slate-500">
-                No users found matching "{searchTerm}"
-            </div>
+          <div className="p-12 text-center text-slate-500">
+            {searchTerm ? `No users found matching "${searchTerm}"` : 'No users registered yet.'}
+          </div>
         )}
       </div>
     </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { sendOTP, verifyOTP } from '@/lib/firebaseAuth'; 
+import { sendOTP, verifyOTP } from '@/lib/firebaseAuth';
 import { ScanLine, Smartphone, Lock, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
 import type { ConfirmationResult } from 'firebase/auth';
 import { Suspense } from 'react';
@@ -19,8 +19,10 @@ function LoginContent() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      import('@/lib/firebaseAuth').then(({ setupRecaptcha }) => {
+      import('@/lib/firebaseAuth').then(({ setupRecaptcha, clearRecaptcha }) => {
         setupRecaptcha();
+        // Cleanup on unmount
+        return () => clearRecaptcha();
       });
     }
   }, []);
@@ -38,9 +40,9 @@ function LoginContent() {
       const result = await sendOTP(formattedNumber);
       setConfirmationResult(result);
       setStep('otp');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending OTP:', error);
-      alert('Failed to send OTP. If testing, check if number is whitelisted.');
+      alert(`Failed to send OTP: ${error.message || error}`);
     } finally {
       setLoading(false);
     }
@@ -71,7 +73,7 @@ function LoginContent() {
       const data = await response.json();
 
       if (data.success) {
-        
+
         // A. If Admin -> Always go to Admin Panel
         if (data.role === 'ADMIN') {
           router.push('/admin/dashboard');
@@ -99,7 +101,7 @@ function LoginContent() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 px-4 selection:bg-indigo-500/30 font-sans">
-      
+
       {/* Background Ambience */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-indigo-900/20 blur-[100px]" />
@@ -107,7 +109,7 @@ function LoginContent() {
       </div>
 
       <div className="w-full max-w-md bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl p-8 relative z-10">
-        
+
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-500/10 mb-4 border border-indigo-500/20">
             <ScanLine className="w-6 h-6 text-indigo-400" />

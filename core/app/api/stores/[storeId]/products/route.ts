@@ -29,20 +29,18 @@ export async function GET(
       .select(`
         id,
         price,
-        original_price,
         aisle,
-        in_stock,
-        product:products (
+        inStock,
+        product:Product (
           id,
           name,
           category,
-          description,
-          image_url,
+          imageUrl,
           barcode
         )
       `)
       .eq('storeId', store.id)
-      .eq('in_stock', true);
+      .eq('inStock', true);
 
     const { data: storeProducts, error } = await productsQuery;
 
@@ -52,11 +50,11 @@ export async function GET(
       id: sp.product.id,
       name: sp.product.name,
       category: sp.product.category,
-      description: sp.product.description,
-      image: sp.product.image_url,
+      // description: sp.product.description,
+      image: sp.product.imageUrl,
       barcode: sp.product.barcode,
       price: parseFloat(sp.price),
-      originalPrice: parseFloat(sp.original_price),
+      originalPrice: parseFloat(sp.price), // Fallback since DB doesn't have it
       aisle: sp.aisle,
       storeId: storeId,
     }));
@@ -68,14 +66,14 @@ export async function GET(
     if (query) {
       const searchQuery = query.toLowerCase();
       products = products.filter((p: any) =>
-        p.name.toLowerCase().includes(searchQuery) ||
-        p.description?.toLowerCase().includes(searchQuery)
+        p.name.toLowerCase().includes(searchQuery)
       );
     }
 
     return NextResponse.json({ success: true, products });
   } catch (error) {
     console.error('Error fetching products:', error);
+    // Revert detailed error for production
     return NextResponse.json(
       { success: false, error: 'Failed to fetch products' },
       { status: 500 }

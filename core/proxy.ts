@@ -1,24 +1,36 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { adminAuth } from '@/lib/firebase'; 
 
-export async function proxy(request: NextRequest) {
-  // Only run this check for /admin routes
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    
-    // 1. Check for session cookie or token
-    const sessionCookie = request.cookies.get('session')?.value;
-    if (!sessionCookie) {
+export function proxy(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  const session = request.cookies.get('session')?.value;
+
+  // 1. Protect Admin Routes
+  if (path.startsWith('/admin')) {
+    if (!session) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
 
-    // 2. In a real app, verify the cookie and check role in DB
-    // For this example, we assume you have logic to decode the token 
-    // and check if user.role === 'ADMIN'
-    
-    // If not admin:
-    // return NextResponse.redirect(new URL('/dashboard', request.url));
+    try {
+      const user = JSON.parse(session);
+      if (user.role !== 'ADMIN') {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
+    } catch {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
   }
-  
+
+  // 2. Protect Dashboard/Store Routes
+  if (path.startsWith('/dashboard') || path.startsWith('/store') || path.startsWith('/scan')) {
+    if (!session) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+  }
+
   return NextResponse.next();
 }
+
+export const config = {
+  matcher: ['/admin/:path*', '/dashboard/:path*', '/store/:path*', '/scan/:path*'],
+};

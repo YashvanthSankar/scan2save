@@ -20,6 +20,7 @@ enum Role {
 model User {
   id           String             @id @default(uuid())
   phoneNumber  String             @unique
+  name         String? // Display name
   role         Role               @default(USER) // New: Default is regular user
   createdAt    DateTime           @default(now())
   
@@ -121,6 +122,7 @@ model ActiveOffer {
   discountPercentage Int
   isDefault          Boolean  @default(false)
   validUntil         DateTime
+  category           String? // Category for efficient targeting
   
   feedItems          PersonalizedFeed[]
 }

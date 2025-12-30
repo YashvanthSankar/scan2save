@@ -8,36 +8,47 @@ declare global {
   }
 }
 
+export const clearRecaptcha = () => {
+  if (typeof window !== 'undefined' && window.recaptchaVerifier) {
+    try {
+      window.recaptchaVerifier.clear();
+    } catch (e) {
+      console.warn("Failed to clear recaptcha", e);
+    }
+    window.recaptchaVerifier = undefined;
+  }
+};
+
 export const setupRecaptcha = () => {
   // 2. Prevent running on Server-Side (Next.js SSR)
   if (typeof window === 'undefined') return;
 
   // 3. Check if the DOM element actually exists before attaching
   const recaptchaContainer = document.getElementById('sign-in-button');
-  
+
   if (!recaptchaContainer) {
     console.error("DOM element 'sign-in-button' not found. Make sure the component is mounted.");
     return;
   }
 
-  // 4. Prevent Double Initialization (React Strict Mode / Re-renders)
-  if (!window.recaptchaVerifier) {
-    try {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'sign-in-button', {
-        'size': 'invisible',
-        'callback': () => {
-          console.log('reCAPTCHA solved');
-        },
-        'expired-callback': () => {
-          console.warn('reCAPTCHA expired. User needs to re-verify.');
-          // Optional: reset logic here
-        }
-      });
-    } catch (error) {
-      console.error("Error initializing Recaptcha:", error);
-      // If it fails (e.g., already rendered), clear it so we can try again
-      window.recaptchaVerifier = undefined;
-    }
+  // 4. Always clear old instance if it exists to prevent stale DOM bindings on re-renders
+  // This is critical for Single Page Apps (SPA) navigation
+  if (window.recaptchaVerifier) {
+    clearRecaptcha();
+  }
+
+  try {
+    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'sign-in-button', {
+      'size': 'invisible',
+      'callback': () => {
+        console.log('reCAPTCHA solved');
+      },
+      'expired-callback': () => {
+        console.warn('reCAPTCHA expired. User needs to re-verify.');
+      }
+    });
+  } catch (error) {
+    console.error("Error initializing Recaptcha:", error);
   }
 };
 
@@ -52,10 +63,10 @@ export const sendOTP = async (phoneNumber: string): Promise<ConfirmationResult> 
   // 5. Reset the widget if it was already used/rendered to avoid "reCAPTCHA has already been rendered" error
   // This is crucial for retries
   try {
-     // Some versions of Firebase require rendering first to clear state
-     await window.recaptchaVerifier.render(); 
+    // Some versions of Firebase require rendering first to clear state
+    await window.recaptchaVerifier.render();
   } catch (e) {
-     // If it's already rendered, that's fine, we continue
+    // If it's already rendered, that's fine, we continue
   }
 
   return signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
