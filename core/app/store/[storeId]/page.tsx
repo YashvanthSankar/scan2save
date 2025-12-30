@@ -16,6 +16,7 @@ import PersonalizedFeed from '@/components/PersonalizedFeed';
 import ProductGrid from '@/components/ProductGrid';
 import StoreHeader from '@/components/StoreHeader';
 import StoreFilters from '@/components/StoreFilters';
+import { prisma } from '@/lib/prisma';
 
 interface StorePageProps {
     params: Promise<{ storeId: string }>;
@@ -23,27 +24,68 @@ interface StorePageProps {
 }
 
 async function getStoreData(storeId: string) {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/stores/${storeId}`, {
-        cache: 'no-store'
-    });
-
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.store;
+    try {
+        const store = await prisma.store.findUnique({
+            where: { storeId },
+            select: {
+                id: true,
+                storeId: true,
+                name: true,
+                location: true,
+                isActive: true,
+            }
+        });
+        return store;
+    } catch (error) {
+        console.error('Error fetching store:', error);
+        return null;
+    }
 }
 
 async function getStoreProducts(storeId: string, category?: string, query?: string) {
-    const params = new URLSearchParams();
-    if (category) params.set('category', category);
-    if (query) params.set('q', query);
+    try {
+        const store = await prisma.store.findUnique({
+            where: { storeId },
+            select: { id: true }
+        });
 
-    const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/stores/${storeId}/products${params.toString() ? '?' + params.toString() : ''}`;
+        if (!store) return [];
 
-    const res = await fetch(url, { cache: 'no-store' });
+        const products = await prisma.storeProduct.findMany({
+            where: {
+                storeId: store.id,
+                inStock: true,
+                ...(category && {
+                    product: {
+                        category: { equals: category, mode: 'insensitive' as const }
+                    }
+                }),
+                ...(query && {
+                    product: {
+                        name: { contains: query, mode: 'insensitive' as const }
+                    }
+                })
+            },
+            include: {
+                product: true
+            },
+            take: 50
+        });
 
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.products || [];
+        return products.map(sp => ({
+            id: sp.product.id,
+            name: sp.product.name,
+            category: sp.product.category,
+            image: sp.product.imageUrl || 'https://placehold.co/400',
+            price: Number(sp.price),
+            originalPrice: Number(sp.price) * 1.2, // Assume 20% markup as original price
+            aisle: sp.aisle,
+            inStock: sp.inStock
+        }));
+    } catch (error) {
+        console.error('Error fetching products:', error);
+        return [];
+    }
 }
 
 export default async function StoreFront({ params, searchParams }: StorePageProps) {
