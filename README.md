@@ -1,4 +1,4 @@
-# 🛒 Scan2Save
+# Scan2Save
 
 **Retail, Reimagined for the AI Era.**
 
