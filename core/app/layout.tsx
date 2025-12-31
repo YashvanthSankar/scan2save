@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/lib/CartContext";
 import FloatingCart from "@/components/FloatingCart";
 import { Background } from "@/components/Background";
 
-const inter = Inter({
+const bricolage = Bricolage_Grotesque({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
@@ -43,7 +43,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${inter.variable} ${inter.className} ${jetbrainsMono.variable} antialiased`}
+        className={`${bricolage.variable} ${bricolage.className} ${jetbrainsMono.variable} antialiased`}
       >
         <CartProvider>
           <Background />
