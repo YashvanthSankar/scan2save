@@ -1,5 +1,3 @@
-'use client';
-
 import Link from 'next/link';
 import {
   QrCode,
@@ -11,84 +9,39 @@ import {
   Zap,
   User,
   Package,
-  Loader2,
   Sparkles,
   Clock
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { redirect } from 'next/navigation';
+import { getSession } from '@/lib/session';
+import { getUserDashboardData } from '@/lib/data';
 
-interface UserProfile {
-  id: string;
-  name: string;
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good Morning';
+  if (hour < 17) return 'Good Afternoon';
+  return 'Good Evening';
 }
 
-interface UserStats {
-  totalSaved: number;
-  points: number;
-  voucherCount: number;
-}
+export default async function UserDashboard() {
+  const session = await getSession();
 
-export default function UserDashboard() {
-  const router = useRouter();
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [stats, setStats] = useState<UserStats | null>(null);
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
-  const [cartCount, setCartCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [greeting, setGreeting] = useState('Hello');
+  if (!session || !session.userId) {
+    redirect('/');
+  }
 
-  useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) setGreeting('Good Morning');
-    else if (hour < 17) setGreeting('Good Afternoon');
-    else setGreeting('Good Evening');
-  }, []);
+  const data = await getUserDashboardData(session.userId);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const res = await fetch('/api/user/me');
-        const data = await res.json();
-        if (data.success) {
-          setUser(data.user);
-          setStats(data.stats);
-          setRecentActivity(data.history.map((h: any) => ({
-            ...h,
-            amount: `₹${h.total.toLocaleString()}`,
-            icon: h.store.toLowerCase().includes('coffee') ? '☕' : (h.store.toLowerCase().includes('online') ? '📦' : '🛒')
-          })));
-
-          try {
-            if (data.user && typeof data.user.id === 'string') {
-              const cartRes = await fetch(`/api/cart?userId=${data.user.id || ''}`);
-              const cartData = await cartRes.json();
-              if (cartData.items) setCartCount(cartData.items.length);
-            }
-          } catch (e) {
-            console.log('Failed to fetch cart count');
-          }
-        }
-      } catch (error) {
-        console.error("Failed to load dashboard", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, []);
-
-  if (loading) {
+  if (!data) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
-          <p className="text-muted-foreground text-sm">Loading your dashboard...</p>
-        </div>
+        <p>Failed to load dashboard data.</p>
       </div>
     );
   }
+
+  const { user, stats, history: recentActivity, cartCount } = data;
+  const greeting = getGreeting();
 
   return (
     <div className="min-h-screen text-foreground font-sans pb-32 overflow-x-hidden selection:bg-primary/30">
@@ -272,7 +225,7 @@ export default function UserDashboard() {
                 </div>
               </div>
               <div className="text-right">
-                <span className="block font-bold text-foreground">{item.amount}</span>
+                <span className="block font-bold text-foreground">{item.formattedAmount}</span>
                 <span className="text-[10px] text-emerald-400 font-medium flex items-center justify-end gap-1">
                   <ArrowUpRight className="w-3 h-3" />
                   Saved 12%

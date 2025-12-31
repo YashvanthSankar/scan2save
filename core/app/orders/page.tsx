@@ -1,95 +1,43 @@
-'use client';
-
 import Link from 'next/link';
-import { ArrowLeft, Package, Clock, CheckCircle2, ShoppingBag, Loader2, ChevronRight, Receipt } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ArrowLeft, Package, Clock, CheckCircle2, ShoppingBag, Receipt } from 'lucide-react';
+import { redirect } from 'next/navigation';
+import { getSession } from '@/lib/session';
+import { getUserOrders } from '@/lib/data';
 
-interface OrderItem {
-  name: string;
-  quantity: number;
-  price: number;
-}
-
-interface Order {
-  id: string;
-  date: string;
-  store: string;
-  total: number;
-  status: 'isPaid' | 'isVerified' | 'pending';
-  items: OrderItem[];
-}
-
-export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const res = await fetch('/api/orders');
-        const data = await res.json();
-
-        if (data.success && data.orders) {
-          const mappedOrders: Order[] = data.orders.map((t: any) => ({
-            id: t.id,
-            date: new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-            store: t.store || 'Unknown Store',
-            total: t.total,
-            status: t.isPaid ? (t.isVerified ? 'isVerified' : 'isPaid') : 'pending',
-            items: t.items?.map((item: any) => ({
-              name: item.name || 'Product',
-              quantity: item.quantity || 1,
-              price: item.price || 0
-            })) || []
-          }));
-          setOrders(mappedOrders);
-        }
-      } catch (error) {
-        console.error('Failed to fetch orders:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOrders();
-  }, []);
-
-  const getStatusDisplay = (status: string) => {
-    switch (status) {
-      case 'isVerified':
-        return {
-          label: 'Completed',
-          color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-          icon: CheckCircle2,
-          dotColor: 'bg-emerald-400'
-        };
-      case 'isPaid':
-        return {
-          label: 'Paid',
-          color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-          icon: Package,
-          dotColor: 'bg-blue-400'
-        };
-      default:
-        return {
-          label: 'Pending',
-          color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-          icon: Clock,
-          dotColor: 'bg-amber-400'
-        };
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
-          <p className="text-muted-foreground text-sm">Loading your orders...</p>
-        </div>
-      </div>
-    );
+const getStatusDisplay = (status: string) => {
+  switch (status) {
+    case 'isVerified':
+      return {
+        label: 'Completed',
+        color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+        icon: CheckCircle2,
+        dotColor: 'bg-emerald-400'
+      };
+    case 'isPaid':
+      return {
+        label: 'Paid',
+        color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+        icon: Package,
+        dotColor: 'bg-blue-400'
+      };
+    default:
+      return {
+        label: 'Pending',
+        color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+        icon: Clock,
+        dotColor: 'bg-amber-400'
+      };
   }
+};
+
+export default async function OrdersPage() {
+  const session = await getSession();
+
+  if (!session || !session.userId) {
+    redirect('/');
+  }
+
+  const orders = await getUserOrders(session.userId);
 
   return (
     <div className="min-h-screen text-foreground p-6 md:p-12 relative pb-24">
@@ -132,7 +80,7 @@ export default function OrdersPage() {
             return (
               <div
                 key={order.id}
-                className="premium-card overflow-hidden animate-fade-in-up opacity-0"
+                className="premium-card overflow-hidden animate-fade-in-up"
                 style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
               >
                 {/* Order Header */}

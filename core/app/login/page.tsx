@@ -124,7 +124,7 @@ function LoginContent() {
                   <label className="block text-sm font-medium text-muted-foreground mb-2">Phone Number</label>
                   <div className="relative group">
                     {/* Country Code */}
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10 whitespace-nowrap">
                       <span className="text-muted-foreground font-medium flex items-center gap-2 border-r border-white/10 pr-3">
                         <span className="text-base">🇮🇳</span>
                         <span>+91</span>
@@ -135,7 +135,7 @@ function LoginContent() {
                       type="tel"
                       required
                       maxLength={10}
-                      className="input-premium w-full pl-[6.5rem] pr-12 py-4 text-lg tracking-wide"
+                      className="input-premium w-full !pl-32 pr-12 py-4 text-lg tracking-wide"
                       placeholder="98765 43210"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}

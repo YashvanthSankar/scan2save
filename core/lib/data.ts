@@ -1,4 +1,6 @@
 // lib/data.ts
+import { prisma } from '@/lib/prisma';
+
 
 export const STORES = [
   {
@@ -138,3 +140,110 @@ export const PRODUCTS = [
     aisle: "Laptop Station, Row 3"
   }
 ];
+
+export async function getUserDashboardData(userId: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        transactions: {
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          include: {
+            store: true,
+            items: true
+          }
+        },
+        claimedOffers: true
+      }
+    });
+
+    if (!user) return null;
+
+    // Calculate Stats
+    const totalSpent = user.transactions.reduce((sum, tx) => sum + Number(tx.totalAmount), 0);
+    const points = Math.floor(totalSpent * 0.1);
+    const totalSaved = Math.floor(totalSpent * 0.12);
+
+    const recentActivity = user.transactions.map(tx => ({
+      id: tx.id,
+      store: tx.store?.name || 'Unknown Store',
+      loc: tx.store?.location || 'Online',
+      date: tx.createdAt.toISOString(),
+      items: tx.items.length,
+      total: Number(tx.totalAmount),
+      status: tx.isPaid ? 'Completed' : 'Pending',
+      formattedAmount: `₹${Number(tx.totalAmount).toLocaleString()}`,
+      icon: (tx.store?.name || '').toLowerCase().includes('coffee') ? '☕' : ((tx.store?.name || '').toLowerCase().includes('online') ? '📦' : '🛒')
+    }));
+
+    // Get Cart Count
+    const cart = await prisma.cart.findUnique({
+      where: { userId },
+      include: { items: true }
+    });
+    const cartCount = cart?.items.length || 0;
+
+    return {
+      user: {
+        id: user.id,
+        name: user.name || 'User',
+        phone: user.phoneNumber,
+        memberSince: user.createdAt,
+        role: user.role
+      },
+      stats: {
+        totalSaved,
+        totalSpent,
+        points,
+        voucherCount: user.claimedOffers.filter(o => !o.isUsed).length
+      },
+      history: recentActivity,
+      cartCount
+    };
+  } catch (error) {
+    console.error('Failed to fetch dashboard data:', error);
+    return null;
+  }
+}
+
+export async function getUserOrders(userId: string) {
+  try {
+    const transactions = await prisma.transaction.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        store: {
+          select: { name: true, location: true }
+        },
+        items: {
+          include: {
+            product: {
+              select: { name: true, imageUrl: true, category: true }
+            }
+          }
+        }
+      }
+    });
+
+    return transactions.map(t => ({
+      id: t.id,
+      date: t.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      store: t.store?.name || 'Unknown Store',
+      location: t.store?.location || '',
+      total: Number(t.totalAmount),
+      status: t.isPaid ? (t.isVerified ? 'isVerified' : 'isPaid') : ('pending' as 'isPaid' | 'isVerified' | 'pending'),
+      gatePassToken: t.gatePassToken,
+      items: t.items.map(item => ({
+        name: item.product.name,
+        quantity: item.quantity,
+        price: Number(item.priceAtPurchase),
+        image: item.product.imageUrl,
+        category: item.product.category
+      }))
+    }));
+  } catch (error) {
+    console.error('Failed to fetch orders:', error);
+    return [];
+  }
+}
