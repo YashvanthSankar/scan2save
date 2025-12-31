@@ -12,7 +12,10 @@ import {
   User,
   CreditCard,
   Clock,
-  Hash
+  Hash,
+  QrCode,
+  RotateCcw,
+  Sparkles
 } from 'lucide-react';
 import jsQR from 'jsqr';
 import Link from 'next/link';
@@ -35,10 +38,13 @@ export default function GuardVerifyPage() {
   const [scanResult, setResult] = useState<VerifyResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [manualToken, setManualToken] = useState('');
+  const [scannerError, setScannerError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Verify token via API
   const verifyToken = async (token: string) => {
+    if (!token || loading) return;
+
     setLoading(true);
     try {
       const res = await fetch('/api/admin/verify', {
@@ -60,10 +66,15 @@ export default function GuardVerifyPage() {
   const handleScan = (rawValue: string) => {
     if (!rawValue || loading) return;
 
+    console.log('Scanned:', rawValue);
+
     try {
       const data = JSON.parse(rawValue);
       // Check if it's a valid Gate Pass QR
       if (data.type === 'GATE_PASS' && data.token) {
+        verifyToken(data.token);
+      } else if (data.token) {
+        // Fallback for just token in JSON
         verifyToken(data.token);
       } else {
         setResult({ valid: false, message: 'Invalid QR Format - Not a Gate Pass' });
@@ -73,7 +84,7 @@ export default function GuardVerifyPage() {
       if (rawValue.startsWith('GP-')) {
         verifyToken(rawValue);
       } else {
-        setResult({ valid: false, message: 'Not a Scan2Save QR Code' });
+        setResult({ valid: false, message: 'Not a valid Gate Pass QR' });
       }
     }
   };
@@ -106,7 +117,7 @@ export default function GuardVerifyPage() {
         if (code) {
           handleScan(code.data);
         } else {
-          alert("No QR Code found in image");
+          setResult({ valid: false, message: 'No QR Code found in image' });
         }
       };
       img.src = event.target?.result as string;
@@ -114,45 +125,82 @@ export default function GuardVerifyPage() {
     reader.readAsDataURL(file);
   };
 
-  return (
-    <div className="min-h-screen text-foreground p-6 font-sans flex flex-col items-center relative">
+  const resetScanner = () => {
+    setResult(null);
+    setManualToken('');
+    setScannerError(false);
+  };
 
+  return (
+    <div className="min-h-screen text-foreground font-sans">
       {/* Header */}
-      <div className="mb-8 text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-4 border border-primary/20">
-          <ShieldCheck className="w-6 h-6 text-primary" />
+      <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-6 text-white text-center relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `radial-gradient(circle at 20% 50%, rgba(255,255,255,0.3) 0%, transparent 50%)`
+          }} />
         </div>
-        <h1 className="text-2xl font-bold">Guard Checkpoint</h1>
-        <p className="text-muted-foreground text-sm">Verify customer's exit gate pass</p>
+        <div className="relative z-10">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm mb-3">
+            <ShieldCheck className="w-7 h-7" />
+          </div>
+          <h1 className="text-2xl font-bold">Guard Checkpoint</h1>
+          <p className="text-white/70 text-sm mt-1">Scan customer's exit gate pass</p>
+        </div>
       </div>
 
-      <div className="w-full max-w-md space-y-6">
+      <div className="p-4 md:p-6 max-w-md mx-auto space-y-4">
 
         {/* SCANNER AREA */}
         {!scanResult && !loading && (
           <>
-            <div className="bg-card rounded-3xl overflow-hidden border-2 border-border relative shadow-2xl">
-              <div className="h-72 relative">
-                <Scanner
-                  onScan={(res) => handleScan(res[0].rawValue)}
-                  styles={{ container: { height: '100%' } }}
-                />
-
-                {/* Overlay */}
-                <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
-                  <div className="w-44 h-44 border-2 border-primary rounded-2xl relative">
-                    <div className="absolute inset-x-0 top-0 h-1 bg-primary shadow-[0_0_20px_rgba(99,102,241,1)] animate-[scan_2s_ease-in-out_infinite]" />
+            <div className="premium-card overflow-hidden">
+              <div className="h-64 md:h-72 relative bg-black">
+                {!scannerError ? (
+                  <Scanner
+                    onScan={(res) => {
+                      if (res && res.length > 0) {
+                        handleScan(res[0].rawValue);
+                      }
+                    }}
+                    onError={() => setScannerError(true)}
+                    styles={{
+                      container: { height: '100%', width: '100%' },
+                      video: { objectFit: 'cover' }
+                    }}
+                  />
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-6 text-center">
+                    <QrCode className="w-12 h-12 mb-4 opacity-50" />
+                    <p className="font-medium mb-2">Camera not available</p>
+                    <p className="text-xs">Use image upload or manual entry below</p>
                   </div>
-                </div>
+                )}
+
+                {/* Scan Frame Overlay */}
+                {!scannerError && (
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
+                    <div className="w-40 h-40 relative">
+                      {/* Corner Brackets */}
+                      <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-emerald-400 rounded-tl-lg" />
+                      <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-emerald-400 rounded-tr-lg" />
+                      <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-emerald-400 rounded-bl-lg" />
+                      <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-emerald-400 rounded-br-lg" />
+                      {/* Scan Line */}
+                      <div className="absolute inset-x-2 top-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent animate-scan-line" />
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Manual Upload Button (For Testing) */}
-              <div className="p-4 bg-muted/80 backdrop-blur-sm flex justify-center gap-4">
+              {/* Upload Button */}
+              <div className="p-4 bg-white/[0.02] border-t border-white/5 flex justify-center">
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground transition-all"
                 >
-                  <ImageIcon className="w-4 h-4" /> Upload Image
+                  <ImageIcon className="w-4 h-4" />
+                  Upload QR Image
                 </button>
                 <input
                   type="file"
@@ -165,10 +213,10 @@ export default function GuardVerifyPage() {
             </div>
 
             {/* Manual Token Entry */}
-            <div className="bg-card/50 border border-border rounded-2xl p-4">
-              <p className="text-sm text-muted-foreground mb-3 flex items-center gap-2">
-                <Hash className="w-4 h-4" />
-                Or enter token manually
+            <div className="premium-card p-4">
+              <p className="text-xs text-muted-foreground mb-3 flex items-center gap-2 uppercase tracking-wider font-bold">
+                <Hash className="w-3 h-3" />
+                Manual Entry
               </p>
               <div className="flex gap-2">
                 <input
@@ -176,12 +224,13 @@ export default function GuardVerifyPage() {
                   value={manualToken}
                   onChange={(e) => setManualToken(e.target.value.toUpperCase())}
                   placeholder="GP-XXXXXXXX-XXXX"
-                  className="flex-1 bg-muted border border-border rounded-xl px-4 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="input-premium flex-1 font-mono text-sm"
+                  onKeyDown={(e) => e.key === 'Enter' && handleManualVerify()}
                 />
                 <button
                   onClick={handleManualVerify}
                   disabled={!manualToken.trim()}
-                  className="bg-primary text-primary-foreground px-4 py-2 rounded-xl font-bold text-sm disabled:opacity-50"
+                  className="px-5 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform shadow-lg shadow-indigo-500/25"
                 >
                   Verify
                 </button>
@@ -192,88 +241,112 @@ export default function GuardVerifyPage() {
 
         {/* LOADING STATE */}
         {loading && (
-          <div className="h-80 flex flex-col items-center justify-center space-y-4">
-            <Loader2 className="w-12 h-12 text-primary animate-spin" />
-            <p className="text-lg font-bold text-foreground">Verifying Gate Pass...</p>
+          <div className="premium-card p-12 flex flex-col items-center justify-center">
+            <div className="relative">
+              <div className="w-20 h-20 rounded-full border-4 border-indigo-500/20 flex items-center justify-center">
+                <Loader2 className="w-10 h-10 text-primary animate-spin" />
+              </div>
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-indigo-500 animate-spin" />
+            </div>
+            <p className="text-lg font-bold text-foreground mt-6">Verifying Gate Pass...</p>
+            <p className="text-sm text-muted-foreground mt-1">Please wait</p>
           </div>
         )}
 
         {/* RESULT: ACCESS GRANTED */}
         {scanResult && scanResult.valid && scanResult.transaction && (
-          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-3xl p-6 text-center animate-in zoom-in duration-300">
-            <CheckCircle className="w-20 h-20 text-emerald-500 mx-auto mb-4" />
-            <h2 className="text-3xl font-bold text-foreground mb-1">ACCESS GRANTED</h2>
-            <p className="text-emerald-500 text-sm mb-6">Customer may exit</p>
+          <div className="premium-card overflow-hidden animate-scale-in">
+            {/* Success Header */}
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-6 text-white text-center">
+              <CheckCircle className="w-16 h-16 mx-auto mb-3" />
+              <h2 className="text-2xl font-bold">ACCESS GRANTED</h2>
+              <p className="text-emerald-100 text-sm">Customer may exit</p>
+            </div>
 
-            {/* Customer Info */}
-            <div className="bg-background/50 rounded-xl p-4 text-left border border-border mb-4">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <User className="w-4 h-4" />
-                  <span>Customer</span>
+            <div className="p-5 space-y-4">
+              {/* Customer Info */}
+              <div className="bg-white/[0.02] rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <User className="w-4 h-4" />
+                    <span>Customer</span>
+                  </div>
+                  <span className="font-bold text-foreground">{scanResult.transaction.customer.name}</span>
                 </div>
-                <div className="text-right text-foreground font-medium">{scanResult.transaction.customer.name}</div>
 
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <CreditCard className="w-4 h-4" />
-                  <span>Amount Paid</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <CreditCard className="w-4 h-4" />
+                    <span>Amount Paid</span>
+                  </div>
+                  <span className="font-bold text-emerald-400">₹{scanResult.transaction.total.toLocaleString()}</span>
                 </div>
-                <div className="text-right text-foreground font-bold">₹{scanResult.transaction.total.toLocaleString()}</div>
 
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="w-4 h-4" />
-                  <span>Verified At</span>
-                </div>
-                <div className="text-right text-foreground text-xs font-mono">
-                  {new Date(scanResult.transaction.verifiedAt).toLocaleTimeString()}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <Clock className="w-4 h-4" />
+                    <span>Verified At</span>
+                  </div>
+                  <span className="font-mono text-xs text-foreground">
+                    {new Date(scanResult.transaction.verifiedAt).toLocaleTimeString()}
+                  </span>
                 </div>
               </div>
-            </div>
 
-            {/* Items List */}
-            <div className="bg-background/50 rounded-xl p-4 text-left border border-border">
-              <p className="text-muted-foreground text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Package className="w-4 h-4" /> Purchased Items ({scanResult.transaction.items.length})
-              </p>
-              <ul className="space-y-2 max-h-40 overflow-y-auto">
-                {scanResult.transaction.items.map((item, i) => (
-                  <li key={i} className="flex justify-between text-sm border-b border-border pb-2 last:border-0">
-                    <span className="text-foreground">{item.name}</span>
-                    <span className="text-muted-foreground font-mono">×{item.quantity}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+              {/* Items List */}
+              <div className="bg-white/[0.02] rounded-xl p-4">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-3 flex items-center gap-2">
+                  <Package className="w-3 h-3" />
+                  Items ({scanResult.transaction.items.length})
+                </p>
+                <ul className="space-y-2 max-h-32 overflow-y-auto">
+                  {scanResult.transaction.items.map((item, i) => (
+                    <li key={i} className="flex justify-between text-sm py-1 border-b border-white/5 last:border-0">
+                      <span className="text-foreground">{item.name}</span>
+                      <span className="text-muted-foreground font-mono">×{item.quantity}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-            <button
-              onClick={() => { setResult(null); setManualToken(''); }}
-              className="mt-6 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition-colors shadow-lg"
-            >
-              Scan Next Customer
-            </button>
+              <button
+                onClick={resetScanner}
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2"
+              >
+                <RotateCcw className="w-5 h-5" />
+                Scan Next Customer
+              </button>
+            </div>
           </div>
         )}
 
         {/* RESULT: ACCESS DENIED */}
         {scanResult && !scanResult.valid && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-3xl p-8 text-center animate-in zoom-in duration-300">
-            <XCircle className="w-20 h-20 text-red-500 mx-auto mb-4" />
-            <h2 className="text-3xl font-bold text-foreground mb-2">ACCESS DENIED</h2>
-            <p className="text-red-400 mb-4">{scanResult.message}</p>
+          <div className="premium-card overflow-hidden animate-scale-in">
+            {/* Error Header */}
+            <div className="bg-gradient-to-r from-rose-600 to-red-600 p-6 text-white text-center">
+              <XCircle className="w-16 h-16 mx-auto mb-3" />
+              <h2 className="text-2xl font-bold">ACCESS DENIED</h2>
+              <p className="text-rose-100 text-sm mt-1">{scanResult.message}</p>
+            </div>
 
-            <button
-              onClick={() => { setResult(null); setManualToken(''); }}
-              className="mt-4 w-full bg-secondary hover:bg-secondary/80 text-foreground font-bold py-3 rounded-xl transition-colors"
-            >
-              Try Again
-            </button>
+            <div className="p-5">
+              <button
+                onClick={resetScanner}
+                className="w-full bg-white/5 hover:bg-white/10 text-foreground font-bold py-4 rounded-xl transition-all border border-white/10 flex items-center justify-center gap-2"
+              >
+                <RotateCcw className="w-5 h-5" />
+                Try Again
+              </button>
+            </div>
           </div>
         )}
 
         {/* Back Link */}
-        <div className="text-center pt-4">
-          <Link href="/admin/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            ← Back to Admin Dashboard
+        <div className="text-center pt-2">
+          <Link href="/admin/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1">
+            <Sparkles className="w-3 h-3" />
+            Back to Admin Dashboard
           </Link>
         </div>
 

@@ -93,19 +93,19 @@ export default function LandingPage() {
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-300 opacity-0">
             <Link
-              href="/login"
+              href="/for-shoppers"
               className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 bg-[length:200%_100%] hover:bg-right text-white rounded-2xl font-bold flex items-center justify-center gap-3 transition-all duration-500 shadow-[0_0_40px_rgba(99,102,241,0.3)] hover:shadow-[0_0_60px_rgba(99,102,241,0.4)] hover:scale-105 active:scale-95 group"
             >
               <Smartphone className="w-5 h-5" />
-              <span>Start Scanning</span>
+              <span>Get Started</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
 
             <Link
-              href="#features"
+              href="/for-retailers"
               className="w-full sm:w-auto px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-foreground rounded-2xl font-semibold flex items-center justify-center gap-2 transition-all"
             >
-              Learn More
+              For Retailers
               <ChevronRight className="w-4 h-4" />
             </Link>
           </div>

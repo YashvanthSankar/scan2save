@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { ArrowLeft, Download, CheckCircle2, MapPin, Calendar, Hash, Store, CreditCard, Sparkles, Receipt } from 'lucide-react';
+import { ArrowLeft, Download, CheckCircle2, MapPin, Calendar, Hash, Store, CreditCard, Sparkles, Receipt, QrCode } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
+import GatePassQR from '@/components/GatePassQR';
 
 interface InvoicePageProps {
     params: Promise<{ id: string }>;
@@ -196,12 +197,23 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
                         {/* Gate Pass */}
                         {transaction.gatePassToken && (
                             <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-2xl p-6 text-center">
-                                <div className="flex items-center justify-center gap-2 mb-3">
-                                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                                <div className="flex items-center justify-center gap-2 mb-4">
+                                    <QrCode className="w-5 h-5 text-emerald-400" />
                                     <p className="text-sm font-bold text-emerald-400">Exit Gate Pass</p>
                                 </div>
-                                <p className="font-mono text-3xl font-bold text-foreground tracking-[0.3em] mb-2">{transaction.gatePassToken}</p>
-                                <p className="text-xs text-muted-foreground">Show this at exit for verification</p>
+
+                                {/* QR Code for Guard to Scan */}
+                                <div className="mb-4">
+                                    <GatePassQR token={transaction.gatePassToken} />
+                                </div>
+
+                                {/* Token Text (backup) */}
+                                <p className="font-mono text-lg font-bold text-foreground tracking-[0.2em] mb-2">
+                                    {transaction.gatePassToken}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Show this QR to the guard at exit
+                                </p>
                             </div>
                         )}
 
