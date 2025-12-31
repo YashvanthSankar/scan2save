@@ -12,7 +12,7 @@ import {
 interface User {
     id: string;
     phone: string;
-    name: string;
+    name: string | null;
     role: string;
     joinedAt: string;
     transactionCount: number;
