@@ -3,17 +3,13 @@
 import { useEffect, useState } from 'react';
 import {
     Sparkles,
-    Tag,
     ShoppingBag,
     Loader2,
-    TrendingUp,
     CheckCircle,
-    Clock,
-    Gift,
-    Ticket,
-    ArrowRight
+    Minus,
+    Plus,
+    Zap
 } from 'lucide-react';
-import Link from 'next/link';
 import { useCart } from '@/lib/CartContext';
 
 interface Offer {
@@ -41,13 +37,12 @@ export default function PersonalizedFeed({ storeId }: { storeId: string }) {
     useEffect(() => {
         const fetchOffers = async () => {
             try {
-                // In a real app we'd maintain session, for this demo we assume user 1
                 const res = await fetch('/api/scan', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         qrPayload: { storeId: storeId, timestamp: Date.now(), name: 'Store' },
-                        userId: "00000000-0000-0000-0000-000000000002", // Consistent Demo User
+                        userId: "00000000-0000-0000-0000-000000000002",
                     })
                 });
 
@@ -68,7 +63,6 @@ export default function PersonalizedFeed({ storeId }: { storeId: string }) {
 
     const handleClaim = (offerId: number) => {
         setClaiming(offerId);
-        // Simulate API Claim for Demo
         setTimeout(() => {
             setClaimedOffers(prev => ({
                 ...prev,
@@ -80,17 +74,21 @@ export default function PersonalizedFeed({ storeId }: { storeId: string }) {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center p-8 bg-slate-900/30 rounded-3xl border border-slate-800">
-                <div className="relative mb-6">
-                    <div className="w-16 h-16 rounded-full bg-indigo-500/20 blur-xl animate-pulse-glow" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <Sparkles className="w-8 h-8 text-indigo-400 animate-bounce" />
+            <div className="container mx-auto px-4">
+                <div className="premium-card flex flex-col items-center justify-center p-10">
+                    <div className="relative mb-6">
+                        <div className="w-20 h-20 rounded-full bg-gradient-to-r from-indigo-500/20 to-violet-500/20 blur-2xl animate-pulse" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 animate-bounce-subtle">
+                                <Sparkles className="w-8 h-8 text-white" />
+                            </div>
+                        </div>
                     </div>
+                    <h3 className="text-xl font-bold text-foreground mb-2">Curating Your Feed</h3>
+                    <p className="text-muted-foreground text-sm text-center">
+                        AI is analyzing personalized matches for you...
+                    </p>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-1">Curating Your Feed</h3>
-                <p className="text-slate-400 text-xs text-center">
-                    AI is analyzing matches for <span className="text-white">Active Store</span>
-                </p>
             </div>
         );
     }
@@ -98,131 +96,141 @@ export default function PersonalizedFeed({ storeId }: { storeId: string }) {
     if (offers.length === 0) return null;
 
     return (
-        <div className="container mx-auto px-4 mt-8 animate-in slide-in-from-bottom-4">
+        <div className="container mx-auto px-4 animate-fade-in">
 
-            {/* --- PERSONA BANNER --- */}
-            <div className="glass-card rounded-3xl p-6 relative overflow-hidden group mb-6">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+            {/* Persona Banner */}
+            <div className="premium-card p-6 relative overflow-hidden mb-6">
+                {/* Background Glow */}
+                <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-indigo-500/20 to-violet-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
-                <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg">
-                            <Sparkles className="w-5 h-5 text-white" />
-                        </div>
-                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-300">AI Verified Match</span>
+                <div className="relative z-10 flex items-center gap-4">
+                    <div className="p-3 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl shadow-lg shadow-indigo-500/30">
+                        <Sparkles className="w-6 h-6 text-white" />
                     </div>
-
-                    <h2 className="text-2xl font-bold text-white mb-1">
-                        Offers for <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">{persona}</span>
-                    </h2>
-                    <p className="text-slate-400 text-sm flex items-center gap-1.5">
-                        <CheckCircle className="w-4 h-4 text-emerald-500" />
-                        Matched based on your purchase history
-                    </p>
+                    <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                            <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">AI Verified Match</span>
+                        </div>
+                        <h2 className="text-xl font-bold text-foreground">
+                            Offers for <span className="gradient-text">{persona}</span>
+                        </h2>
+                    </div>
+                    <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Based on your history</span>
+                    </div>
                 </div>
             </div>
 
-            {/* --- OFFERS LIST (Horizontal Scroll) --- */}
-            <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+            {/* Offers Carousel */}
+            <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
                 {offers.map((offer, index) => {
                     const isClaimed = !!claimedOffers[offer.id];
-                    const discountCode = claimedOffers[offer.id];
+                    const cartItem = items.find(i => i.productId === offer.product.id);
+                    const quantity = cartItem?.quantity || 0;
 
                     return (
                         <div
                             key={offer.id}
-                            className={`min-w-[280px] md:min-w-[320px] relative rounded-3xl overflow-hidden transition-all duration-300 snap-center ${isClaimed
-                                ? 'bg-slate-900 border border-emerald-500/30'
-                                : 'glass-card hover:border-indigo-500/30'
-                                }`}
+                            className={`
+                                min-w-[280px] md:min-w-[300px] 
+                                snap-center
+                                premium-card overflow-hidden
+                                transition-all duration-300
+                                animate-fade-in-up opacity-0
+                                ${isClaimed ? 'ring-1 ring-emerald-500/30' : ''}
+                            `}
+                            style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
                         >
-                            <div className="flex flex-col h-full">
-                                {/* Image Area */}
-                                <div className="h-32 relative">
-                                    <img
-                                        src={offer.product.imageUrl || `https://placehold.co/400x400/1e293b/ffffff?text=${encodeURIComponent(offer.product.name.substring(0, 2))}`}
-                                        alt={offer.product.name}
-                                        className="w-full h-full object-cover"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
-                                    <div className="absolute top-2 left-2">
-                                        <div className="bg-white text-black text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">
-                                            {offer.discountPercentage}% OFF
-                                        </div>
-                                    </div>
+                            {/* Image */}
+                            <div className="h-36 relative overflow-hidden">
+                                <img
+                                    src={offer.product.imageUrl || `https://placehold.co/400x400/1e293b/ffffff?text=${encodeURIComponent(offer.product.name.substring(0, 2))}`}
+                                    alt={offer.product.name}
+                                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f1a] via-transparent to-transparent" />
+
+                                {/* Discount Badge */}
+                                <div className="absolute top-3 left-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-lg shadow-rose-500/30 flex items-center gap-1">
+                                    <span className="animate-pulse">🔥</span>
+                                    {offer.discountPercentage}% OFF
                                 </div>
 
-                                {/* Content Area */}
-                                <div className="p-4 pt-0 flex flex-col justify-between flex-grow">
-                                    <div>
-                                        <h3 className="font-bold text-lg text-white leading-tight mb-1 truncate">{offer.title}</h3>
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-[10px] font-medium text-muted-foreground px-2 py-0.5 rounded-full border border-white/10 bg-white/5">
-                                                {offer.product.category}
-                                            </span>
+                                {/* Category */}
+                                <div className="absolute bottom-3 right-3 text-[10px] font-medium text-white/80 px-2 py-1 rounded-lg bg-black/50 backdrop-blur-sm border border-white/10">
+                                    {offer.product.category}
+                                </div>
+                            </div>
+
+                            {/* Content */}
+                            <div className="p-4">
+                                <h3 className="font-bold text-foreground leading-tight mb-2 line-clamp-1">
+                                    {offer.title}
+                                </h3>
+
+                                {offer.matchReason && !isClaimed && (
+                                    <p className="text-xs text-primary leading-snug line-clamp-2 mb-4 flex items-start gap-1.5">
+                                        <Sparkles className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                                        {offer.matchReason}
+                                    </p>
+                                )}
+
+                                {/* Action Button */}
+                                <div className="mt-auto">
+                                    {quantity > 0 ? (
+                                        <div className="flex items-center bg-gradient-to-r from-indigo-600/20 to-violet-600/20 rounded-xl border border-indigo-500/30 overflow-hidden">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); decrementItem(offer.product.id); }}
+                                                className="w-12 h-10 flex items-center justify-center text-white hover:bg-white/10 transition-colors active:scale-90"
+                                            >
+                                                <Minus className="w-4 h-4" />
+                                            </button>
+                                            <span className="flex-1 text-center font-bold text-white">{quantity}</span>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    addItem({
+                                                        id: offer.product.id,
+                                                        name: offer.product.name,
+                                                        price: 0,
+                                                        image: offer.product.imageUrl || undefined
+                                                    }, storeId);
+                                                }}
+                                                className="w-12 h-10 flex items-center justify-center text-white hover:bg-white/10 transition-colors active:scale-90"
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                            </button>
                                         </div>
-                                        {offer.matchReason && !isClaimed && (
-                                            <p className="text-xs text-indigo-300 leading-snug line-clamp-2 h-8">
-                                                ✨ {offer.matchReason}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="mt-3">
-                                        {(() => {
-                                            const cartItem = items.find(i => i.productId === offer.product.id);
-                                            const quantity = cartItem?.quantity || 0;
-
-                                            if (quantity > 0) {
-                                                return (
-                                                    <div className="flex items-center justify-between bg-slate-800 rounded-xl p-1 border border-indigo-500/50">
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); decrementItem(offer.product.id); }}
-                                                            className="w-8 h-8 flex items-center justify-center bg-slate-700 text-white rounded-lg active:scale-95 transition-all hover:bg-slate-600"
-                                                        >
-                                                            -
-                                                        </button>
-                                                        <span className="font-bold text-white text-sm">{quantity}</span>
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                addItem({
-                                                                    id: offer.product.id,
-                                                                    name: offer.product.name,
-                                                                    price: 0, // Price handled by backend/store context usually 
-                                                                    image: offer.product.imageUrl || undefined
-                                                                }, storeId);
-                                                            }}
-                                                            className="w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-lg active:scale-95 transition-all hover:bg-indigo-500"
-                                                        >
-                                                            +
-                                                        </button>
-                                                    </div>
-                                                );
-                                            }
-
-                                            return (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        // Auto-claim + Add to Cart
-                                                        handleClaim(offer.id);
-                                                        addItem({
-                                                            id: offer.product.id,
-                                                            name: offer.product.name,
-                                                            price: 0, // Demo: real app fetches price
-                                                            image: offer.product.imageUrl || undefined
-                                                        }, storeId);
-                                                    }}
-                                                    disabled={claiming === offer.id}
-                                                    className="w-full bg-white text-black hover:bg-slate-200 active:scale-95 transition-all py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2"
-                                                >
-                                                    {claiming === offer.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <ShoppingBag className="w-3 h-3" />}
-                                                    {claiming === offer.id ? 'ADDING...' : 'ADD TO CART'}
-                                                </button>
-                                            );
-                                        })()}
-                                    </div>
+                                    ) : (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleClaim(offer.id);
+                                                addItem({
+                                                    id: offer.product.id,
+                                                    name: offer.product.name,
+                                                    price: 0,
+                                                    image: offer.product.imageUrl || undefined
+                                                }, storeId);
+                                            }}
+                                            disabled={claiming === offer.id}
+                                            className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/25 active:scale-95 disabled:opacity-70"
+                                        >
+                                            {claiming === offer.id ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    Adding...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <ShoppingBag className="w-4 h-4" />
+                                                    Add to Cart
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>

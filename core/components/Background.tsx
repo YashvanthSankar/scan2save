@@ -3,24 +3,73 @@
 import React from "react";
 
 export function Background() {
-    const gridPattern = `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(99 102 241 / 0.1)'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e")`;
-
     return (
         <div className="fixed inset-0 overflow-hidden pointer-events-none z-[-1]">
-            {/* Grid Pattern Layer */}
+            {/* Base Gradient */}
+            <div className="absolute inset-0 bg-[#030712]" />
+
+            {/* Static Mesh Gradient - No animation for performance */}
             <div
-                className="absolute inset-0 [mask-image:linear-gradient(to_bottom,transparent,black_20%,black_80%,transparent)] opacity-45"
-                style={{ backgroundImage: gridPattern }}
+                className="absolute inset-0 opacity-50"
+                style={{
+                    backgroundImage: `
+                        radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.10) 0%, transparent 50%),
+                        radial-gradient(ellipse at 40% 70%, rgba(16, 185, 129, 0.06) 0%, transparent 40%)
+                    `,
+                    willChange: 'transform',
+                }}
             />
 
-            {/* Glowing Intelligence Orb - Primary */}
-            <div className="absolute top-[10%] left-[20%] w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] animate-pulse-slow mix-blend-screen dark:mix-blend-normal" />
+            {/* Primary Glowing Orb - Simplified */}
+            <div
+                className="absolute w-[500px] h-[500px] md:w-[700px] md:h-[700px] rounded-full"
+                style={{
+                    top: '5%',
+                    left: '10%',
+                    background: 'radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%)',
+                    filter: 'blur(60px)',
+                    willChange: 'transform',
+                }}
+            />
 
-            {/* Secondary Orb */}
-            <div className="absolute bottom-[20%] right-[10%] w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[100px] animate-float mix-blend-screen dark:mix-blend-normal" />
+            {/* Secondary Orb - Purple */}
+            <div
+                className="absolute w-[400px] h-[400px] md:w-[600px] md:h-[600px] rounded-full"
+                style={{
+                    bottom: '10%',
+                    right: '5%',
+                    background: 'radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%)',
+                    filter: 'blur(80px)',
+                    willChange: 'transform',
+                }}
+            />
 
-            {/* Subtle Noise Texture */}
-            <div className="absolute inset-0 opacity-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] brightness-100 contrast-150 mix-blend-overlay" />
+            {/* Grid Pattern Overlay - Simplified */}
+            <div
+                className="absolute inset-0 opacity-[0.02]"
+                style={{
+                    backgroundImage: `
+                        linear-gradient(rgba(148, 163, 184, 0.5) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(148, 163, 184, 0.5) 1px, transparent 1px)
+                    `,
+                    backgroundSize: '80px 80px',
+                }}
+            />
+
+            {/* Radial Vignette */}
+            <div
+                className="absolute inset-0"
+                style={{
+                    background: 'radial-gradient(ellipse at center, transparent 0%, rgba(3, 7, 18, 0.5) 100%)',
+                }}
+            />
+
+            {/* Top Gradient Fade */}
+            <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[#030712] to-transparent" />
+
+            {/* Bottom Gradient Fade */}
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#030712] to-transparent" />
         </div>
     );
 }

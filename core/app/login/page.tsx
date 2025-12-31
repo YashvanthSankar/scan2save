@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { sendOTP, verifyOTP } from '@/lib/firebaseAuth';
-import { ScanLine, Smartphone, Lock, Loader2, ArrowRight, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { ScanLine, Smartphone, Lock, Loader2, ArrowRight, ShieldCheck, ArrowLeft, Sparkles } from 'lucide-react';
 import type { ConfirmationResult } from 'firebase/auth';
 import { Suspense } from 'react';
 import Link from 'next/link';
@@ -22,7 +22,6 @@ function LoginContent() {
     if (typeof window !== 'undefined') {
       import('@/lib/firebaseAuth').then(({ setupRecaptcha, clearRecaptcha }) => {
         setupRecaptcha();
-        // Cleanup on unmount
         return () => clearRecaptcha();
       });
     }
@@ -60,11 +59,9 @@ function LoginContent() {
 
     setLoading(true);
     try {
-      // 1. Firebase Verify
       const result = await verifyOTP(confirmationResult, otp);
       const idToken = await result.user.getIdToken();
 
-      // 2. Backend Verify & Session Creation
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -74,21 +71,17 @@ function LoginContent() {
       const data = await response.json();
 
       if (data.success) {
-
-        // A. If Admin -> Always go to Admin Panel
         if (data.role === 'ADMIN') {
           router.push('/admin/dashboard');
           return;
         }
 
-        // B. If User -> Check if they were trying to visit a store (from Scan Page)
         const nextUrl = searchParams.get('next');
         if (nextUrl) {
           router.push(decodeURIComponent(nextUrl));
         } else {
           router.push('/dashboard');
         }
-
       } else {
         alert('Login failed: ' + data.error);
       }
@@ -103,101 +96,141 @@ function LoginContent() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 selection:bg-primary/30 font-sans text-foreground">
 
-      {/* Background Ambience */}
+      {/* Login Card */}
+      <div className="w-full max-w-md relative">
+        {/* Glow Effect Behind Card */}
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 via-violet-500/20 to-indigo-500/20 rounded-3xl blur-xl opacity-50 -z-10" />
 
+        <div className="premium-card p-8 md:p-10">
 
-      <div className="w-full max-w-md bg-card/80 backdrop-blur-xl border border-border rounded-2xl shadow-2xl p-8 relative z-10">
-
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-4 border border-primary/20">
-            <ScanLine className="w-6 h-6 text-primary" />
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 mb-5 shadow-lg shadow-indigo-500/30">
+              <ScanLine className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">
+              Scan<span className="gradient-text">2Save</span>
+            </h1>
+            <p className="text-muted-foreground mt-2 text-sm">
+              {step === 'phone' ? 'Welcome back! Enter your phone to continue' : 'Enter the verification code'}
+            </p>
           </div>
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">
-            Scan2<span className="text-primary">Save</span>
-          </h1>
-          <p className="text-muted-foreground mt-2 text-sm">
-            {step === 'phone' ? 'Get started with your phone number' : 'Enter the code sent to your phone'}
-          </p>
-        </div>
 
-        <div className="relative">
-          {step === 'phone' ? (
-            <form onSubmit={handleSendOTP} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1.5">Phone Number</label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none z-10">
-                    <span className="text-muted-foreground font-medium border-r border-border pr-3">🇮🇳 +91</span>
+          {/* Forms */}
+          <div className="relative">
+            {step === 'phone' ? (
+              <form onSubmit={handleSendOTP} className="space-y-6 animate-fade-in">
+                <div>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">Phone Number</label>
+                  <div className="relative group">
+                    {/* Country Code */}
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                      <span className="text-muted-foreground font-medium flex items-center gap-2 border-r border-white/10 pr-3">
+                        <span className="text-base">🇮🇳</span>
+                        <span>+91</span>
+                      </span>
+                    </div>
+
+                    <input
+                      type="tel"
+                      required
+                      maxLength={10}
+                      className="input-premium w-full pl-[6.5rem] pr-12 py-4 text-lg tracking-wide"
+                      placeholder="98765 43210"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    />
+
+                    <Smartphone className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                   </div>
-                  <input
-                    type="tel"
-                    required
-                    maxLength={10}
-                    className="block w-full pl-24 pr-10 py-3 bg-secondary/50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-lg tracking-wide bg-transparent"
-                    placeholder="98765 43210"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  />
-                  <Smartphone className="absolute right-3 top-3.5 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                 </div>
-              </div>
 
-              <div id="sign-in-button"></div>
+                <div id="sign-in-button"></div>
 
-              <button
-                type="submit"
-                disabled={loading || phoneNumber.length < 10}
-                className="w-full flex justify-center items-center py-3 px-4 rounded-xl shadow-lg shadow-primary/20 text-sm font-bold text-primary-foreground bg-primary hover:bg-primary/90 focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                {loading ? <><Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" /> Sending Code...</> : <><ArrowRight className="mr-2 h-4 w-4" /> Get OTP</>}
-              </button>
+                <button
+                  type="submit"
+                  disabled={loading || phoneNumber.length < 10}
+                  className="w-full flex justify-center items-center py-4 px-6 rounded-xl text-base font-bold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="animate-spin w-5 h-5" />
+                      <span>Sending Code...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Get OTP</span>
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
+                </button>
 
-              <div className="text-center mt-4">
-                <p className="text-xs text-slate-500">By continuing, you agree to our Terms & Privacy Policy.</p>
-              </div>
-            </form>
-          ) : (
-            <form onSubmit={handleVerifyOTP} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1.5">Verification Code</label>
-                <div className="relative group">
-                  <input
-                    type="text"
-                    required
-                    maxLength={6}
-                    className="block w-full pl-10 pr-4 py-3 bg-secondary/50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all tracking-[0.5em] text-center font-mono text-xl bg-transparent"
-                    placeholder="••••••"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  />
-                  <Lock className="absolute left-3 top-3.5 w-5 h-5 text-muted-foreground group-focus-within:text-emerald-500 transition-colors" />
+                <p className="text-center text-xs text-muted-foreground mt-4">
+                  By continuing, you agree to our Terms & Privacy Policy.
+                </p>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyOTP} className="space-y-6 animate-fade-in">
+                <div>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">Verification Code</label>
+                  <div className="relative group">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-emerald-400 transition-colors" />
+
+                    <input
+                      type="text"
+                      required
+                      maxLength={6}
+                      className="input-premium w-full pl-12 pr-4 py-4 tracking-[0.5em] text-center font-mono text-xl focus:border-emerald-500/50 focus:ring-emerald-500/20"
+                      placeholder="••••••"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-3 text-center flex items-center justify-center gap-2">
+                    <Sparkles className="w-3 h-3 text-primary" />
+                    Code sent to +91 {phoneNumber}
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2 text-center">Code sent to +91 {phoneNumber}</p>
-              </div>
 
-              <button
-                type="submit"
-                disabled={loading || otp.length < 6}
-                className="w-full flex justify-center items-center py-3 px-4 rounded-xl shadow-lg shadow-emerald-500/20 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                {loading ? <><Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" /> Verifying...</> : <><ShieldCheck className="mr-2 h-4 w-4" /> Verify & Login</>}
-              </button>
+                <button
+                  type="submit"
+                  disabled={loading || otp.length < 6}
+                  className="w-full flex justify-center items-center py-4 px-6 rounded-xl text-base font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98] gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="animate-spin w-5 h-5" />
+                      <span>Verifying...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="w-5 h-5" />
+                      <span>Verify & Login</span>
+                    </>
+                  )}
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setStep('phone')}
-                className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
-              >
-                ← Wrong Number?
-              </button>
-            </form>
-          )}
+                <button
+                  type="button"
+                  onClick={() => setStep('phone')}
+                  className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors py-3 flex items-center justify-center gap-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Wrong Number?
+                </button>
+              </form>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Back to Home */}
-      <Link href="/" className="mt-8 text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 text-sm z-10">
-        <ArrowLeft className="w-4 h-4" /> Back to Home
+      <Link
+        href="/"
+        className="mt-8 text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 text-sm z-10 group"
+      >
+        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+        <span>Back to Home</span>
       </Link>
     </div>
   );
@@ -205,7 +238,11 @@ function LoginContent() {
 
 export default function Page() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-900 flex items-center justify-center"><div className="text-white">Loading...</div></div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    }>
       <LoginContent />
     </Suspense>
   );

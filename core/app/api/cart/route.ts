@@ -17,6 +17,11 @@ export async function GET(request: Request) {
     const cart = await prisma.cart.findUnique({
       where: { userId: userId },
       include: {
+        store: {
+          select: {
+            storeId: true // Get the slug, not the UUID
+          }
+        },
         items: {
           include: {
             product: true
@@ -65,7 +70,7 @@ export async function GET(request: Request) {
 
         return {
           id: item.id,
-          storeId: cart.storeId,
+          storeId: cart.store?.storeId || cart.storeId, // Use slug if available
           productId: item.product.id,
           name: item.product.name,
           price: finalPrice,
@@ -82,7 +87,7 @@ export async function GET(request: Request) {
       success: true,
       cart: {
         id: cart.id,
-        storeId: cart.storeId,
+        storeId: cart.store?.storeId || cart.storeId, // Use slug if available
       },
       items: itemsWithPricing,
     });
@@ -95,6 +100,7 @@ export async function GET(request: Request) {
     );
   }
 }
+
 
 export async function POST(request: Request) {
   try {

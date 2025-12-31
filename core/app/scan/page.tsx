@@ -3,19 +3,17 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import jsQR from 'jsqr';
-import { ArrowLeft, Upload, Loader2, Camera, CameraOff, SwitchCamera, Sparkles, Scan } from 'lucide-react';
+import { ArrowLeft, Upload, Loader2, Camera, CameraOff, SwitchCamera, Sparkles, Scan, Zap } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ScanPage() {
   const router = useRouter();
 
-  // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | null>(null);
 
-  // State
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStage, setProcessingStage] = useState<'decoding' | 'analyzing' | 'redirecting'>('decoding');
   const [cameraActive, setCameraActive] = useState(false);
@@ -23,7 +21,6 @@ export default function ScanPage() {
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [error, setError] = useState('');
 
-  // 1. Camera Handling Logic
   const stopCamera = useCallback(() => {
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
@@ -97,7 +94,6 @@ export default function ScanPage() {
     return () => stopCamera();
   }, [startCamera, stopCamera]);
 
-  // 2. File Upload Logic
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       stopCamera();
@@ -132,7 +128,6 @@ export default function ScanPage() {
     reader.readAsDataURL(file);
   };
 
-  // 3. Success Logic with AI Animation
   const handleScanSuccess = async (rawData: string) => {
     stopCamera();
     setIsProcessing(true);
@@ -140,7 +135,6 @@ export default function ScanPage() {
 
     try {
       const data = JSON.parse(rawData);
-      // Simulate "AI Analysis" delay for effect
       await new Promise(resolve => setTimeout(resolve, 1500));
 
       if (data.app === 'scan2save' && data.sid) {
@@ -158,25 +152,37 @@ export default function ScanPage() {
   };
 
   return (
-    <div className="min-h-screen text-white flex flex-col relative overflow-hidden font-sans">
+    <div className="min-h-screen text-foreground flex flex-col relative overflow-hidden font-sans">
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* --- HEADER --- */}
-      <div className="absolute top-0 left-0 w-full z-30 p-6 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent">
-        <Link href="/dashboard" onClick={stopCamera} className="p-3 bg-white/5 border border-white/10 rounded-full backdrop-blur-md hover:bg-white/20 transition">
+      {/* Header */}
+      <div className="absolute top-0 left-0 w-full z-30 p-5 flex items-center justify-between bg-gradient-to-b from-[#030712] via-[#030712]/80 to-transparent">
+        <Link
+          href="/dashboard"
+          onClick={stopCamera}
+          className="p-3 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md hover:bg-white/10 transition-all"
+        >
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <span className="font-bold tracking-[0.2em] text-xs uppercase text-slate-300 drop-shadow-md">AI Scanner</span>
+
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="font-bold tracking-widest text-[10px] uppercase text-muted-foreground">AI Scanner</span>
+        </div>
+
         {cameraPermission ? (
-          <button onClick={toggleCameraFacing} className="p-3 bg-white/5 border border-white/10 rounded-full backdrop-blur-md hover:bg-white/20 transition">
+          <button
+            onClick={toggleCameraFacing}
+            className="p-3 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md hover:bg-white/10 transition-all"
+          >
             <SwitchCamera className="w-5 h-5" />
           </button>
-        ) : <div className="w-10" />}
+        ) : <div className="w-11" />}
       </div>
 
-      {/* --- MAIN CONTENT --- */}
+      {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden">
-        {/* Video feed */}
+        {/* Video Feed */}
         {cameraPermission !== false && (
           <video
             ref={videoRef}
@@ -185,52 +191,66 @@ export default function ScanPage() {
           />
         )}
 
-        {/* Dynamic Overlay */}
-        <div className="absolute inset-0 bg-black/40 z-10" />
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#030712]/60 via-transparent to-[#030712]/80 z-10" />
 
-        {/* --- SCANNING STATE --- */}
+        {/* Scanning Frame */}
         {!isProcessing && (
           <div className="relative w-72 h-72 z-20">
-            {/* Neon Corners */}
-            <div className="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-emerald-500 rounded-tl-3xl shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
-            <div className="absolute top-0 right-0 w-12 h-12 border-t-2 border-r-2 border-emerald-500 rounded-tr-3xl shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
-            <div className="absolute bottom-0 left-0 w-12 h-12 border-b-2 border-l-2 border-emerald-500 rounded-bl-3xl shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
-            <div className="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 border-emerald-500 rounded-br-3xl shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
+            {/* Neon Corners with Gradient */}
+            <div className="absolute top-0 left-0 w-14 h-14 border-t-2 border-l-2 border-indigo-500 rounded-tl-3xl shadow-[0_0_20px_rgba(99,102,241,0.5)]" />
+            <div className="absolute top-0 right-0 w-14 h-14 border-t-2 border-r-2 border-violet-500 rounded-tr-3xl shadow-[0_0_20px_rgba(139,92,246,0.5)]" />
+            <div className="absolute bottom-0 left-0 w-14 h-14 border-b-2 border-l-2 border-violet-500 rounded-bl-3xl shadow-[0_0_20px_rgba(139,92,246,0.5)]" />
+            <div className="absolute bottom-0 right-0 w-14 h-14 border-b-2 border-r-2 border-indigo-500 rounded-br-3xl shadow-[0_0_20px_rgba(99,102,241,0.5)]" />
 
             {/* Scanning Beam */}
             <div className="absolute inset-0 overflow-hidden rounded-3xl">
-              <div className="w-full h-1 bg-emerald-500/80 absolute top-0 animate-scan-line shadow-[0_0_20px_rgba(16,185,129,0.8)]" />
+              <div className="w-full h-1 bg-gradient-to-r from-indigo-500 via-violet-500 to-indigo-500 absolute top-0 animate-scan-line shadow-[0_0_30px_rgba(99,102,241,0.8)]" />
             </div>
 
             {/* Center Hint */}
             {!cameraActive && !error && (
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-2" />
-                <p className="text-[10px] uppercase tracking-widest text-emerald-500">Initializing</p>
+                <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-3">
+                  <Loader2 className="w-8 h-8 text-white animate-spin" />
+                </div>
+                <p className="text-[10px] uppercase tracking-widest text-primary font-bold">Initializing Camera</p>
+              </div>
+            )}
+
+            {cameraActive && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-20 h-20 border-2 border-dashed border-white/20 rounded-2xl animate-pulse" />
               </div>
             )}
           </div>
         )}
 
-        {/* --- AI PROCESSING STATE (Micro-interaction) --- */}
+        {/* AI Processing State */}
         {isProcessing && (
           <div className="relative z-30 flex flex-col items-center justify-center p-8">
-            {/* Floating Particles Animation */}
-            <div className="relative w-24 h-24 mb-6">
-              <div className="absolute inset-0 bg-indigo-500/20 rounded-full blur-xl animate-pulse-glow" />
+            <div className="relative w-28 h-28 mb-8">
+              {/* Outer Glow */}
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/30 to-violet-500/30 rounded-full blur-2xl animate-pulse" />
+
+              {/* Icon */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <Sparkles className="w-12 h-12 text-indigo-400 animate-bounce" />
+                <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-3xl flex items-center justify-center shadow-xl shadow-indigo-500/40 animate-bounce-subtle">
+                  <Sparkles className="w-10 h-10 text-white" />
+                </div>
               </div>
-              {/* Ring Particles */}
-              <div className="absolute inset-0 border-2 border-indigo-500/30 rounded-full animate-spin [animation-duration:3s]" />
-              <div className="absolute inset-2 border border-emerald-500/30 rounded-full animate-spin [animation-duration:2s] [animation-direction:reverse]" />
+
+              {/* Spinning Rings */}
+              <div className="absolute inset-0 border-2 border-indigo-500/30 rounded-full animate-spin" style={{ animationDuration: '3s' }} />
+              <div className="absolute inset-3 border border-violet-500/30 rounded-full animate-spin" style={{ animationDuration: '2s', animationDirection: 'reverse' }} />
             </div>
 
             <div className="text-center space-y-2">
-              <h3 className="text-2xl font-bold text-white tracking-tight animate-pulse">
+              <h3 className="text-2xl font-bold text-foreground tracking-tight">
                 {processingStage === 'analyzing' ? 'AI Analyzing...' : 'Redirecting...'}
               </h3>
-              <p className="text-indigo-300 text-sm font-medium">
+              <p className="text-primary text-sm font-medium flex items-center justify-center gap-2">
+                <Zap className="w-4 h-4" />
                 {processingStage === 'analyzing'
                   ? 'Matching your personalized profile'
                   : 'Preparing your store experience'}
@@ -241,22 +261,22 @@ export default function ScanPage() {
 
         {/* Error State */}
         {error && (
-          <div className="absolute bottom-40 z-30 bg-red-500/20 border border-red-500/50 backdrop-blur-md px-6 py-3 rounded-2xl flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-red-200 text-sm font-medium">{error}</span>
+          <div className="absolute bottom-40 z-30 premium-card py-3 px-5 border-rose-500/30 flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+            <span className="text-rose-400 text-sm font-medium">{error}</span>
           </div>
         )}
       </div>
 
-      {/* --- CONTROLS --- */}
+      {/* Controls */}
       {!isProcessing && (
-        <div className="bg-black/80 backdrop-blur-xl p-8 pt-6 rounded-t-[2.5rem] border-t border-white/5 z-30">
+        <div className="bg-[#030712]/95 backdrop-blur-xl p-6 pt-5 rounded-t-[2.5rem] border-t border-white/5 z-30">
           <div className="flex gap-4 max-w-md mx-auto">
             <button
               onClick={() => cameraActive ? stopCamera() : startCamera()}
               className={`flex-1 py-4 rounded-2xl font-bold text-sm tracking-wide transition-all shadow-lg flex items-center justify-center gap-2 ${cameraActive
-                ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                : 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-emerald-900/20'}`}
+                ? 'bg-white/5 border border-white/10 text-muted-foreground hover:bg-white/10'
+                : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-indigo-500/25 hover:shadow-indigo-500/40'}`}
             >
               {cameraActive ? <CameraOff className="w-4 h-4" /> : <Camera className="w-4 h-4" />}
               {cameraActive ? 'STOP' : 'START'}
@@ -265,7 +285,7 @@ export default function ScanPage() {
             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="flex-1 py-4 bg-white text-black rounded-2xl font-bold text-sm tracking-wide hover:bg-slate-200 transition-colors shadow-lg flex items-center justify-center gap-2"
+              className="flex-1 py-4 bg-white text-[#030712] rounded-2xl font-bold text-sm tracking-wide hover:bg-white/90 transition-colors shadow-lg flex items-center justify-center gap-2"
             >
               <Upload className="w-4 h-4" />
               UPLOAD
@@ -273,12 +293,12 @@ export default function ScanPage() {
           </div>
 
           {/* Dev Trigger */}
-          <div className="mt-6 text-center">
+          <div className="mt-5 text-center">
             <button
               onClick={() => handleScanSuccess(JSON.stringify({ app: 'scan2save', sid: 'freshmart-blr-01' }))}
-              className="text-[10px] text-slate-600 font-mono hover:text-indigo-400 transition-colors uppercase tracking-widest border-b border-transparent hover:border-indigo-400"
+              className="text-[10px] text-muted-foreground font-mono hover:text-primary transition-colors uppercase tracking-widest"
             >
-              [DEV] Simulate Scan Signal
+              [DEV] Simulate Scan
             </button>
           </div>
         </div>

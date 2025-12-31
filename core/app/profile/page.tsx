@@ -4,19 +4,17 @@ import Link from 'next/link';
 import {
   ArrowLeft,
   User,
-  Settings,
   ShoppingBag,
   Clock,
-  ChevronRight,
-  Receipt,
   Loader2,
-  Moon,
-  Sun
+  LogOut,
+  ChevronRight,
+  Sparkles,
+  Award,
+  TrendingUp
 } from 'lucide-react';
-import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
-// Types matching API response
 interface UserProfile {
   name: string;
   phone: string;
@@ -40,37 +38,6 @@ interface Transaction {
   status: string;
 }
 
-// Inline Theme Toggle Row Component
-function ThemeToggleRow() {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
-  const isDark = theme === 'dark';
-
-  return (
-    <button
-      onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
-    >
-      <div className="flex items-center gap-3">
-        {isDark ? <Moon size={20} /> : <Sun size={20} />}
-        <span>Theme</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-sm capitalize">{theme}</span>
-        <div className={`w-10 h-6 rounded-full p-1 transition-colors ${isDark ? 'bg-primary' : 'bg-muted'}`}>
-          <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${isDark ? 'translate-x-4' : 'translate-x-0'}`} />
-        </div>
-      </div>
-    </button>
-  );
-}
 
 export default function ProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -83,8 +50,6 @@ export default function ProfilePage() {
       try {
         const res = await fetch('/api/user/me');
         if (res.status === 401 || res.status === 404) {
-          // If user invalid, allow UI to render with null user so they can see Logout button
-          // Or we could auto-logout. Let's auto-logout for 401, but show UI for 404 for debugging or just render a 'Guest' state.
           if (res.status === 404) {
             setUser({ name: 'Guest (Invalid Session)', phone: 'Please Logout', memberSince: new Date().toISOString(), role: 'GUEST' });
           }
@@ -109,21 +74,23 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          <p className="text-muted-foreground text-sm">Loading profile...</p>
+        </div>
       </div>
     );
   }
 
-  // Allow rendering even if user is null (handle safely below) or use the fallback set above
   const displayUser = user || { name: 'Guest', phone: '', memberSince: new Date().toISOString(), role: 'GUEST' };
 
   return (
     <div className="min-h-screen text-foreground font-sans pb-24 relative">
 
       {/* Header */}
-      <div className="p-6 flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-md z-10 border-b border-border">
-        <Link href="/dashboard" className="p-2 bg-muted rounded-full text-muted-foreground hover:text-foreground transition-colors">
+      <div className="p-6 flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-xl z-10 border-b border-white/5">
+        <Link href="/dashboard" className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-muted-foreground hover:text-foreground transition-all">
           <ArrowLeft size={20} />
         </Link>
         <h1 className="text-xl font-bold">My Profile</h1>
@@ -132,49 +99,85 @@ export default function ProfilePage() {
       <div className="p-6 space-y-6">
 
         {/* User Card */}
-        <div className="flex items-center gap-4">
-          <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-2xl font-bold shadow-2xl shadow-indigo-500/20 text-white">
-            {displayUser.name ? displayUser.name.charAt(0).toUpperCase() : <User />}
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-foreground">{displayUser.name || 'User'}</h2>
-            <p className="text-muted-foreground">{displayUser.phone}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Member since {new Date(displayUser.memberSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-            </p>
+        <div className="premium-card p-6">
+          <div className="flex items-center gap-5">
+            {/* Avatar */}
+            <div className="relative">
+              <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 rounded-2xl flex items-center justify-center text-3xl font-bold text-white shadow-lg shadow-violet-500/30">
+                {displayUser.name ? displayUser.name.charAt(0).toUpperCase() : <User className="w-10 h-10" />}
+              </div>
+              {/* Status dot */}
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-lg border-2 border-background flex items-center justify-center">
+                <Sparkles className="w-2.5 h-2.5 text-white" />
+              </div>
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <h2 className="text-2xl font-bold text-foreground truncate">{displayUser.name || 'User'}</h2>
+              <p className="text-muted-foreground text-sm">{displayUser.phone}</p>
+              <div className="flex items-center gap-2 mt-2">
+                <Award className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-xs text-muted-foreground">
+                  Member since {new Date(displayUser.memberSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-card/40 backdrop-blur-md border border-border p-4 rounded-2xl shadow-sm">
-            <p className="text-muted-foreground text-xs uppercase font-bold mb-1">Total Savings</p>
-            <p className="text-2xl font-bold text-emerald-500">₹{stats?.totalSaved?.toLocaleString() || 0}</p>
+          <div className="premium-card p-5 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="w-4 h-4 text-emerald-400" />
+                <p className="text-muted-foreground text-xs uppercase font-bold tracking-wider">Total Savings</p>
+              </div>
+              <p className="text-3xl font-bold text-emerald-400">₹{stats?.totalSaved?.toLocaleString() || 0}</p>
+            </div>
           </div>
-          <div className="bg-card/40 backdrop-blur-md border border-border p-4 rounded-2xl shadow-sm">
-            <p className="text-muted-foreground text-xs uppercase font-bold mb-1">Points</p>
-            <p className="text-2xl font-bold text-primary">{stats?.points?.toLocaleString() || 0}</p>
+
+          <div className="premium-card p-5 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-4 h-4 text-violet-400" />
+                <p className="text-muted-foreground text-xs uppercase font-bold tracking-wider">Points</p>
+              </div>
+              <p className="text-3xl font-bold gradient-text">{stats?.points?.toLocaleString() || 0}</p>
+            </div>
           </div>
         </div>
 
         {/* Transaction History */}
         <div>
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-foreground">
-            <Clock className="w-5 h-5 text-primary" />
-            Recent Activity
-          </h3>
+          <div className="flex items-center gap-3 mb-5">
+            <div className="p-2 bg-primary/10 rounded-xl">
+              <Clock className="w-4 h-4 text-primary" />
+            </div>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Recent Activity</h3>
+            <div className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
+          </div>
 
           {history.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm border border-dashed border-border rounded-xl">
-              No recent activity found.
+            <div className="premium-card text-center py-10">
+              <div className="w-16 h-16 mx-auto mb-4 bg-muted/50 rounded-2xl flex items-center justify-center">
+                <ShoppingBag className="w-8 h-8 text-muted-foreground/50" />
+              </div>
+              <p className="text-muted-foreground text-sm">No recent activity found.</p>
             </div>
           ) : (
             <div className="space-y-3">
               {history.map((item) => (
-                <div key={item.id} className="bg-card/40 backdrop-blur-md border border-border p-4 rounded-2xl flex items-center justify-between group hover:bg-muted/50 transition-colors cursor-pointer shadow-sm">
+                <Link
+                  key={item.id}
+                  href={`/orders/${item.id}`}
+                  className="premium-card flex items-center justify-between p-4 group hover:scale-[1.01] transition-all"
+                >
                   <div className="flex items-center gap-4">
-                    <div className="bg-muted p-3 rounded-xl text-muted-foreground group-hover:text-primary transition-colors">
-                      <ShoppingBag size={20} />
+                    <div className="w-12 h-12 bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl flex items-center justify-center border border-white/5 group-hover:border-primary/30 transition-colors">
+                      <ShoppingBag className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
                     <div>
                       <h4 className="font-bold text-foreground">{item.store}</h4>
@@ -185,32 +188,36 @@ export default function ProfilePage() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-foreground">₹{item.total.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">{item.items} items</p>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="font-bold text-foreground">₹{item.total.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">{item.items} items</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
         </div>
 
-        {/* Settings Links */}
-        <div className="pt-4 border-t border-border space-y-2">
-          {/* Theme Toggle */}
-          <ThemeToggleRow />
+        {/* Settings */}
+        <div className="pt-4 border-t border-white/5 space-y-1">
 
-          {/* LOGOUT BUTTON */}
           <button
             onClick={async () => {
               await fetch('/api/auth/logout', { method: 'POST' });
               window.location.href = '/login';
             }}
-            className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-red-500/10 transition-colors text-red-500"
+            className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-rose-500/10 transition-colors text-rose-400 group"
           >
             <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center group-hover:bg-rose-500/20 transition-colors">
+                <LogOut className="w-5 h-5" />
+              </div>
               <span className="font-bold">Log Out</span>
             </div>
+            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
       </div>

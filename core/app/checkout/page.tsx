@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, CreditCard, CheckCircle2, Loader2, ShieldCheck, AlertCircle } from 'lucide-react';
+import { ArrowLeft, CreditCard, CheckCircle2, Loader2, ShieldCheck, AlertCircle, Sparkles, ArrowRight } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
 import { useRouter } from 'next/navigation';
 
@@ -22,11 +22,6 @@ export default function CheckoutPage() {
     const [orderResult, setOrderResult] = useState<OrderResult | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    // Auto-redirect if empty (basic guard, though middleware handles auth)
-    if (!loading && items.length === 0 && !success) {
-        // In a real app we might redirect, but here just show empty message
-    }
-
     const tax = totalAmount * 0.18;
     const total = totalAmount + tax;
 
@@ -35,10 +30,8 @@ export default function CheckoutPage() {
         setError(null);
 
         try {
-            // Simulate payment gateway delay
             await new Promise(resolve => setTimeout(resolve, 1500));
 
-            // Create order via API
             const res = await fetch('/api/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
@@ -62,87 +55,123 @@ export default function CheckoutPage() {
         }
     };
 
+    // Success State
     if (success && orderResult) {
         return (
-            <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center font-sans animate-in zoom-in duration-500">
-                <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-emerald-500/30">
-                    <CheckCircle2 className="w-12 h-12 text-white" />
-                </div>
-                <h1 className="text-3xl font-bold mb-2 text-foreground">Payment Successful!</h1>
-                <p className="text-muted-foreground max-w-md mb-4">
-                    Your order of {orderResult.itemCount} items from {orderResult.store} has been placed.
-                </p>
+            <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center font-sans">
+                {/* Success Card */}
+                <div className="premium-card p-10 max-w-md w-full animate-scale-in">
+                    {/* Success Icon */}
+                    <div className="w-24 h-24 mx-auto mb-8 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center shadow-xl shadow-emerald-500/30 animate-bounce-subtle">
+                        <CheckCircle2 className="w-12 h-12 text-white" />
+                    </div>
 
-                {/* Gate Pass */}
-                <div className="bg-card/40 border border-emerald-500/30 rounded-2xl p-6 mb-8 max-w-sm w-full">
-                    <p className="text-sm text-muted-foreground mb-2">Your Exit Gate Pass</p>
-                    <p className="font-mono text-2xl font-bold text-foreground tracking-widest mb-2">
-                        {orderResult.gatePassToken}
+                    <h1 className="text-3xl font-bold mb-3 text-foreground">Payment Successful!</h1>
+                    <p className="text-muted-foreground mb-8">
+                        Your order of {orderResult.itemCount} items from <span className="text-foreground font-medium">{orderResult.store}</span> has been placed.
                     </p>
-                    <p className="text-xs text-muted-foreground">Show this at the exit for verification</p>
-                </div>
 
-                <div className="flex gap-4">
-                    <Link href={`/orders/${orderResult.id}`} className="bg-primary text-primary-foreground px-6 py-3 rounded-full font-bold hover:bg-primary/90 transition-all shadow-lg hover:shadow-primary/25 hover:scale-105 active:scale-95">
-                        View Invoice
-                    </Link>
-                    <Link href="/orders" className="bg-muted text-foreground px-6 py-3 rounded-full font-bold hover:bg-muted/80 transition-all">
-                        All Orders
-                    </Link>
+                    {/* Gate Pass */}
+                    <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-2xl p-6 mb-8">
+                        <div className="flex items-center justify-center gap-2 mb-3">
+                            <Sparkles className="w-4 h-4 text-emerald-400" />
+                            <p className="text-sm text-muted-foreground">Your Exit Gate Pass</p>
+                        </div>
+                        <p className="font-mono text-3xl font-bold text-foreground tracking-[0.3em] mb-2">
+                            {orderResult.gatePassToken}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Show this at the exit for verification</p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <Link
+                            href={`/orders/${orderResult.id}`}
+                            className="flex-1 bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-6 py-4 rounded-xl font-bold hover:scale-105 transition-transform shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2"
+                        >
+                            View Invoice
+                            <ArrowRight className="w-4 h-4" />
+                        </Link>
+                        <Link
+                            href="/orders"
+                            className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-foreground px-6 py-4 rounded-xl font-bold transition-colors flex items-center justify-center"
+                        >
+                            All Orders
+                        </Link>
+                    </div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-background text-foreground font-sans p-6 md:p-12 relative selection:bg-indigo-500/30">
+        <div className="min-h-screen text-foreground font-sans p-6 md:p-12 relative selection:bg-primary/30 pb-24">
 
             {/* Header */}
             <div className="max-w-4xl mx-auto mb-8">
-                <Link href="/cart" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors mb-4">
-                    <ArrowLeft className="w-4 h-4 mr-2" /> Back to Cart
+                <Link href="/cart" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors mb-6 group">
+                    <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+                    Back to Cart
                 </Link>
-                <h1 className="text-3xl font-bold flex items-center gap-3">
-                    <CreditCard className="w-8 h-8 text-primary" />
-                    Checkout
-                </h1>
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-primary/10 rounded-2xl">
+                        <CreditCard className="w-8 h-8 text-primary" />
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-bold">Checkout</h1>
+                        <p className="text-muted-foreground text-sm">Complete your purchase securely</p>
+                    </div>
+                </div>
             </div>
 
-            <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
 
                 {/* Order Preview */}
                 <div className="space-y-6">
-                    <div className="bg-card/40 border border-border rounded-3xl p-6 shadow-sm">
-                        <h2 className="font-bold text-lg mb-4">Order Summary</h2>
-                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                            {items.map((item) => (
-                                <div key={item.id} className="flex justify-between items-center text-sm">
+                    <div className="premium-card p-6">
+                        <h2 className="font-bold text-lg mb-5 flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-primary" />
+                            Order Summary
+                        </h2>
+
+                        <div className="space-y-3 max-h-[280px] overflow-y-auto pr-2">
+                            {items.map((item, i) => (
+                                <div
+                                    key={item.id}
+                                    className="flex justify-between items-center text-sm py-2 border-b border-white/5 last:border-0"
+                                >
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 bg-muted rounded-md overflow-hidden">
-                                            <img src={item.image || 'https://placehold.co/100'} alt="" className="w-full h-full object-cover" />
+                                        <div className="w-12 h-12 bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl overflow-hidden border border-white/5">
+                                            <img
+                                                src={item.image || 'https://placehold.co/100'}
+                                                alt=""
+                                                className="w-full h-full object-cover"
+                                            />
                                         </div>
                                         <div>
                                             <span className="block font-medium text-foreground">{item.name}</span>
                                             <span className="text-muted-foreground text-xs">Qty: {item.quantity}</span>
                                         </div>
                                     </div>
-                                    <span className="font-bold">₹{(item.price * item.quantity).toLocaleString()}</span>
+                                    <span className="font-bold text-foreground">₹{(item.price * item.quantity).toLocaleString()}</span>
                                 </div>
                             ))}
                         </div>
-                        <div className="h-px bg-border my-4" />
-                        <div className="space-y-3 text-sm text-muted-foreground">
-                            <div className="flex justify-between">
+
+                        <div className="divider my-4" />
+
+                        <div className="space-y-3">
+                            <div className="flex justify-between text-sm text-muted-foreground">
                                 <span>Subtotal</span>
-                                <span>₹{totalAmount.toLocaleString()}</span>
+                                <span className="text-foreground">₹{totalAmount.toLocaleString()}</span>
                             </div>
-                            <div className="flex justify-between">
+                            <div className="flex justify-between text-sm text-muted-foreground">
                                 <span>GST (18%)</span>
-                                <span>₹{tax.toLocaleString()}</span>
+                                <span className="text-foreground">₹{tax.toLocaleString()}</span>
                             </div>
-                            <div className="flex justify-between text-foreground text-xl font-bold pt-2 border-t border-border">
+                            <div className="divider" />
+                            <div className="flex justify-between text-xl font-bold pt-2">
                                 <span>Total to Pay</span>
-                                <span>₹{total.toLocaleString()}</span>
+                                <span className="gradient-text">₹{total.toLocaleString()}</span>
                             </div>
                         </div>
                     </div>
@@ -150,26 +179,30 @@ export default function CheckoutPage() {
 
                 {/* Payment Method */}
                 <div className="space-y-6">
-                    <div className="bg-card/40 border border-border rounded-3xl p-6 shadow-sm">
-                        <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
-                            <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                    <div className="premium-card p-6">
+                        <h2 className="font-bold text-lg mb-5 flex items-center gap-2">
+                            <ShieldCheck className="w-5 h-5 text-emerald-400" />
                             Secure Payment
                         </h2>
 
-                        {/* Mock Payment Options */}
-                        <div className="space-y-3">
-                            <label className="flex items-center gap-4 p-4 border border-primary/50 bg-primary/5 rounded-xl cursor-pointer transition-colors relative overflow-hidden">
-                                <input type="radio" name="payment" defaultChecked className="w-5 h-5 text-primary accent-primary" />
-                                <div className="flex-1">
-                                    <span className="block font-bold">UPI / QR Code</span>
+                        {/* Payment Options */}
+                        <div className="space-y-3 mb-6">
+                            <label className="flex items-center gap-4 p-4 border border-primary/30 bg-primary/5 rounded-xl cursor-pointer transition-colors relative overflow-hidden group">
+                                <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <input type="radio" name="payment" defaultChecked className="w-5 h-5 text-primary accent-indigo-500" />
+                                <div className="flex-1 relative z-10">
+                                    <span className="block font-bold text-foreground">UPI / QR Code</span>
                                     <span className="text-xs text-muted-foreground">Google Pay, PhonePe, Paytm</span>
                                 </div>
-                                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-xs font-bold text-black">UPI</div>
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-xs font-bold text-white shadow-lg shadow-indigo-500/20">
+                                    UPI
+                                </div>
                             </label>
-                            <label className="flex items-center gap-4 p-4 border border-border rounded-xl cursor-not-allowed opacity-50">
+
+                            <label className="flex items-center gap-4 p-4 border border-white/10 rounded-xl cursor-not-allowed opacity-50">
                                 <input type="radio" name="payment" disabled className="w-5 h-5" />
                                 <div className="flex-1">
-                                    <span className="block font-bold">Credit / Debit Card</span>
+                                    <span className="block font-bold text-foreground">Credit / Debit Card</span>
                                     <span className="text-xs text-muted-foreground">Unavailable in Demo</span>
                                 </div>
                             </label>
@@ -177,32 +210,36 @@ export default function CheckoutPage() {
 
                         {/* Error Message */}
                         {error && (
-                            <div className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-3 text-red-500">
+                            <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-3 text-rose-400">
                                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
                                 <p className="text-sm">{error}</p>
                             </div>
                         )}
 
+                        {/* Pay Button */}
                         <button
                             onClick={handlePayment}
                             disabled={processing || items.length === 0}
-                            className="w-full mt-8 bg-black text-white px-6 py-4 rounded-xl font-bold flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl hover:shadow-2xl disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100"
+                            className="w-full bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 hover:from-slate-800 hover:via-slate-700 hover:to-slate-800 text-white px-6 py-5 rounded-xl font-bold flex items-center justify-center gap-3 transition-all shadow-xl disabled:opacity-70 disabled:cursor-not-allowed group border border-white/10"
                         >
                             {processing ? (
                                 <>
                                     <Loader2 className="w-5 h-5 animate-spin" />
-                                    Processing...
+                                    <span>Processing...</span>
                                 </>
                             ) : (
                                 <>
-                                    <span className="flex-1 text-left">Pay ₹{total.toLocaleString()}</span>
-                                    <ArrowLeft className="w-5 h-5 rotate-180" />
+                                    <span className="flex-1 text-left text-lg">Pay ₹{total.toLocaleString()}</span>
+                                    <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                                        <ArrowRight className="w-5 h-5" />
+                                    </div>
                                 </>
                             )}
                         </button>
-                        <p className="text-center text-xs text-muted-foreground mt-4 flex items-center justify-center gap-1">
-                            <ShieldCheck className="w-3 h-3" />
-                            Payments are 100% Secure
+
+                        <p className="text-center text-xs text-muted-foreground mt-4 flex items-center justify-center gap-2">
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Payments are 100% Secure & Encrypted</span>
                         </p>
                     </div>
                 </div>

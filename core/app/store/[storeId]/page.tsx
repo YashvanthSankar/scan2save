@@ -1,15 +1,9 @@
 import { notFound } from 'next/navigation';
 import {
-    MapPin,
-    Star,
-    Clock,
-    ShieldCheck,
     Search,
-    ArrowRight,
     Tag,
-    Map,
     X,
-    ArrowLeft
+    Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import PersonalizedFeed from '@/components/PersonalizedFeed';
@@ -25,8 +19,14 @@ interface StorePageProps {
 
 async function getStoreData(storeId: string) {
     try {
-        const store = await prisma.store.findUnique({
-            where: { storeId },
+        // Try to find by storeId (slug) first, then by id (UUID)
+        const store = await prisma.store.findFirst({
+            where: {
+                OR: [
+                    { storeId: storeId },
+                    { id: storeId }
+                ]
+            },
             select: {
                 id: true,
                 storeId: true,
@@ -44,8 +44,13 @@ async function getStoreData(storeId: string) {
 
 async function getStoreProducts(storeId: string, category?: string, query?: string) {
     try {
-        const store = await prisma.store.findUnique({
-            where: { storeId },
+        const store = await prisma.store.findFirst({
+            where: {
+                OR: [
+                    { storeId: storeId },
+                    { id: storeId }
+                ]
+            },
             select: { id: true }
         });
 
@@ -78,7 +83,7 @@ async function getStoreProducts(storeId: string, category?: string, query?: stri
             category: sp.product.category,
             image: sp.product.imageUrl || 'https://placehold.co/400',
             price: Number(sp.price),
-            originalPrice: Number(sp.price) * 1.2, // Assume 20% markup as original price
+            originalPrice: Number(sp.price) * 1.2,
             aisle: sp.aisle,
             inStock: sp.inStock
         }));
@@ -105,18 +110,22 @@ export default async function StoreFront({ params, searchParams }: StorePageProp
     const categories: string[] = Array.from(new Set(allProducts.map((p: any) => p.category)));
 
     return (
-        <div className="min-h-screen text-foreground selection:bg-primary/30 font-sans pb-24 relative bg-background">
+        <div className="min-h-screen text-foreground selection:bg-primary/30 font-sans pb-32 relative">
 
-            {/* --- NEW HEADER --- */}
-            <StoreHeader storeName={store.name} storeId={storeId} q={typeof q === 'string' ? q : undefined} category={typeof category === 'string' ? category : undefined} />
+            {/* Store Header */}
+            <StoreHeader
+                storeName={store.name}
+                storeId={storeId}
+                q={typeof q === 'string' ? q : undefined}
+                category={typeof category === 'string' ? category : undefined}
+            />
 
-            {/* --- AI PERSONALIZED FEED (High Priority) --- */}
-            {/* Moved to top for immediate engagement */}
+            {/* AI Personalized Feed */}
             <div className="pt-4 pb-6">
                 <PersonalizedFeed storeId={storeId} />
             </div>
 
-            {/* --- CATEGORIES (Scroll + Dropdown) --- */}
+            {/* Category Filters */}
             <StoreFilters
                 categories={categories}
                 storeId={storeId}
@@ -124,26 +133,41 @@ export default async function StoreFront({ params, searchParams }: StorePageProp
                 activeCategory={typeof category === 'string' ? category : undefined}
             />
 
-            {/* --- PRODUCT GRID --- */}
+            {/* Product Grid */}
             <div className="container mx-auto px-4">
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold flex items-center gap-2">
-                        <Tag className="w-4 h-4 text-primary" />
-                        Explore Items
-                    </h2>
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-xl">
+                            <Tag className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-foreground">Explore Items</h2>
+                            <p className="text-xs text-muted-foreground">{storeProducts.length} products available</p>
+                        </div>
+                    </div>
                     {(q || category) && (
-                        <Link href={`/store/${storeId}`} className="text-xs text-muted-foreground hover:text-red-500 flex items-center gap-1 transition-colors bg-secondary px-2 py-1 rounded-full">
-                            <X className="w-3 h-3" /> Clear Filters
+                        <Link
+                            href={`/store/${storeId}`}
+                            className="text-xs text-muted-foreground hover:text-rose-400 flex items-center gap-1.5 transition-colors bg-white/5 hover:bg-rose-500/10 px-3 py-2 rounded-lg border border-white/10"
+                        >
+                            <X className="w-3.5 h-3.5" />
+                            Clear Filters
                         </Link>
                     )}
                 </div>
 
                 {storeProducts.length === 0 ? (
-                    <div className="text-center py-20 bg-muted/30 rounded-3xl border border-dashed border-border mx-auto max-w-md">
-                        <Search className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
-                        <h3 className="text-lg font-bold text-foreground mb-1">No products found</h3>
-                        <p className="text-sm text-muted-foreground mb-6">Try searching for something else.</p>
-                        <Link href={`/store/${storeId}`} className="inline-block bg-primary text-primary-foreground px-6 py-2 rounded-full text-sm font-medium transition-colors hover:bg-primary/90">
+                    <div className="premium-card text-center py-16 max-w-md mx-auto">
+                        <div className="w-20 h-20 mx-auto mb-6 bg-muted/50 rounded-3xl flex items-center justify-center">
+                            <Search className="w-10 h-10 text-muted-foreground/50" />
+                        </div>
+                        <h3 className="text-xl font-bold text-foreground mb-2">No products found</h3>
+                        <p className="text-muted-foreground text-sm mb-8">Try searching for something else or browse all items.</p>
+                        <Link
+                            href={`/store/${storeId}`}
+                            className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-8 py-4 rounded-xl font-bold hover:scale-105 transition-transform"
+                        >
+                            <Sparkles className="w-4 h-4" />
                             View All Products
                         </Link>
                     </div>
