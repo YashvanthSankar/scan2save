@@ -66,24 +66,33 @@ export default function GuardVerifyPage() {
   const handleScan = (rawValue: string) => {
     if (!rawValue || loading) return;
 
-    console.log('Scanned:', rawValue);
+    console.log('=== QR SCAN DEBUG ===');
+    console.log('Raw scanned value:', rawValue);
 
     try {
       const data = JSON.parse(rawValue);
+      console.log('Parsed JSON:', data);
+
       // Check if it's a valid Gate Pass QR
       if (data.type === 'GATE_PASS' && data.token) {
+        console.log('Valid GATE_PASS format, verifying token:', data.token);
         verifyToken(data.token);
       } else if (data.token) {
         // Fallback for just token in JSON
+        console.log('JSON with token field, verifying:', data.token);
         verifyToken(data.token);
       } else {
+        console.log('Invalid QR format - no token field found');
         setResult({ valid: false, message: 'Invalid QR Format - Not a Gate Pass' });
       }
     } catch (e) {
+      console.log('Not JSON, checking if raw token:', rawValue);
       // Maybe it's just the raw token string
       if (rawValue.startsWith('GP-')) {
+        console.log('Raw GP- token, verifying:', rawValue);
         verifyToken(rawValue);
       } else {
+        console.log('Not a valid gate pass format');
         setResult({ valid: false, message: 'Not a valid Gate Pass QR' });
       }
     }
@@ -101,24 +110,59 @@ export default function GuardVerifyPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    console.log('=== QR IMAGE UPLOAD ===');
+    console.log('File:', file.name, 'Size:', file.size, 'Type:', file.type);
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
+        console.log('Image loaded, dimensions:', img.width, 'x', img.height);
+
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
-        if (!context) return;
+        if (!context) {
+          console.error('Failed to get canvas context');
+          return;
+        }
+
+        // Use original size
         canvas.width = img.width;
         canvas.height = img.height;
         context.drawImage(img, 0, 0);
+
         const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        console.log('Image data size:', imageData.width, 'x', imageData.height);
+
+        // Try to decode QR with options
+        let code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: 'attemptBoth' // Try both normal and inverted
+        });
+
+        // If first attempt fails, try with scaled down image for large images
+        if (!code && (img.width > 1000 || img.height > 1000)) {
+          console.log('First attempt failed, trying with scaled image...');
+          const scale = 0.5;
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          context.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const scaledImageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          code = jsQR(scaledImageData.data, scaledImageData.width, scaledImageData.height, {
+            inversionAttempts: 'attemptBoth'
+          });
+        }
 
         if (code) {
+          console.log('QR Code found:', code.data);
           handleScan(code.data);
         } else {
-          setResult({ valid: false, message: 'No QR Code found in image' });
+          console.log('No QR code detected in image');
+          setResult({ valid: false, message: 'No QR Code found in image. Try a clearer image or use manual entry.' });
         }
+      };
+      img.onerror = () => {
+        console.error('Failed to load image');
+        setResult({ valid: false, message: 'Failed to load image' });
       };
       img.src = event.target?.result as string;
     };
@@ -164,25 +208,52 @@ export default function GuardVerifyPage() {
                 )}
                 {!scannerError ? (
                   <Scanner
-                    onScan={(res) => {
-                      // Handle both array (new version) and object (old version) responses just in case
-                      if (Array.isArray(res) && res.length > 0) {
-                        handleScan(res[0].rawValue);
-                      } else if (res && 'rawValue' in res) {
-                        // @ts-ignore - Handle potential single object fallback
-                        handleScan(res.rawValue);
+                    onScan={(result) => {
+                      console.log('=== SCANNER onScan FIRED ===');
+                      console.log('Raw result:', result);
+
+                      if (!result) {
+                        console.log('Empty result, ignoring');
+                        return;
+                      }
+
+                      // Handle array response (v2.x)
+                      if (Array.isArray(result) && result.length > 0) {
+                        const firstResult = result[0];
+                        console.log('Array result, first item:', firstResult);
+                        if (firstResult?.rawValue) {
+                          handleScan(firstResult.rawValue);
+                          return;
+                        }
+                      }
+
+                      // Handle single object response
+                      if (typeof result === 'object' && 'rawValue' in result) {
+                        console.log('Object result with rawValue:', result.rawValue);
+                        handleScan((result as any).rawValue);
+                        return;
+                      }
+
+                      // Handle string response
+                      if (typeof result === 'string') {
+                        console.log('String result:', result);
+                        handleScan(result);
+                        return;
+                      }
+
+                      console.log('Unknown result format, trying to extract text');
+                    }}
+                    onError={(err: unknown) => {
+                      console.error("Scanner error:", err);
+                      // Don't disable scanner for non-permission errors
+                      const errorMessage = (err as Error)?.message || '';
+                      if (errorMessage.includes('Permission') || errorMessage.includes('NotAllowed')) {
+                        setScannerError(true);
                       }
                     }}
-                    onError={(err) => {
-                      console.error("Scanner error:", err);
-                      setScannerError(true);
-                    }}
-                    scanDelay={500}
-                    allowMultiple={false}
-                    components={{
-                      onOff: false,
-                      torch: true,
-                      finder: false
+                    scanDelay={300}
+                    constraints={{
+                      facingMode: 'environment'
                     }}
                     styles={{
                       container: { height: '100%', width: '100%' },
