@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, CreditCard, CheckCircle2, Loader2, ShieldCheck, AlertCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { ArrowLeft, CreditCard, CheckCircle2, Loader2, ShieldCheck, AlertCircle, Sparkles, ArrowRight, BadgeCheck, PartyPopper } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
 import { useRouter } from 'next/navigation';
 import QRCode from 'react-qr-code';
@@ -13,6 +13,162 @@ interface OrderResult {
     gatePassToken: string;
     store: string;
     itemCount: number;
+}
+
+// Component that polls for verification status
+function SuccessWithVerification({ orderResult }: { orderResult: OrderResult }) {
+    const [isVerified, setIsVerified] = useState(false);
+    const [verifiedAt, setVerifiedAt] = useState<string | null>(null);
+    const [checking, setChecking] = useState(true);
+
+    // Generate QR payload for security guard
+    const qrPayload = JSON.stringify({
+        type: "GATE_PASS",
+        token: orderResult.gatePassToken
+    });
+
+    // Poll for verification status every 2 seconds
+    useEffect(() => {
+        const checkStatus = async () => {
+            try {
+                const res = await fetch(`/api/orders/status?token=${orderResult.gatePassToken}`);
+                const data = await res.json();
+
+                if (data.success && data.verified) {
+                    setIsVerified(true);
+                    setVerifiedAt(data.verifiedAt);
+                    setChecking(false);
+                }
+            } catch (err) {
+                console.error('Status check failed:', err);
+            }
+        };
+
+        // Initial check
+        checkStatus();
+
+        // Poll every 2 seconds until verified
+        const interval = setInterval(() => {
+            if (!isVerified) {
+                checkStatus();
+            }
+        }, 2000);
+
+        return () => clearInterval(interval);
+    }, [orderResult.gatePassToken, isVerified]);
+
+    // Verified State - Beautiful success animation
+    if (isVerified) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center font-sans">
+                <div className="premium-card p-10 max-w-md w-full animate-scale-in">
+                    {/* Verified Icon with Celebration */}
+                    <div className="relative">
+                        <div className="w-28 h-28 mx-auto mb-6 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center shadow-2xl shadow-emerald-500/40 animate-pulse">
+                            <BadgeCheck className="w-14 h-14 text-white" />
+                        </div>
+                        <div className="absolute -top-2 -right-2 w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center animate-bounce shadow-lg">
+                            <PartyPopper className="w-6 h-6 text-white" />
+                        </div>
+                    </div>
+
+                    <h1 className="text-3xl font-bold mb-3 text-emerald-400">Verified! ✓</h1>
+                    <p className="text-foreground text-lg font-medium mb-2">
+                        You're all set to exit!
+                    </p>
+                    <p className="text-muted-foreground mb-6 text-sm">
+                        Thank you for shopping at <span className="text-foreground font-medium">{orderResult.store}</span>
+                    </p>
+
+                    {/* Verification Badge */}
+                    <div className="bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 rounded-2xl p-6 mb-6">
+                        <div className="flex items-center justify-center gap-3 mb-3">
+                            <ShieldCheck className="w-6 h-6 text-emerald-400" />
+                            <span className="text-emerald-400 font-bold uppercase tracking-wider text-sm">Exit Authorized</span>
+                        </div>
+                        <p className="font-mono text-lg font-bold text-foreground tracking-wide">
+                            {orderResult.gatePassToken}
+                        </p>
+                        {verifiedAt && (
+                            <p className="text-xs text-muted-foreground mt-2">
+                                Verified at {new Date(verifiedAt).toLocaleTimeString()}
+                            </p>
+                        )}
+                    </div>
+
+                    <Link
+                        href="/dashboard"
+                        className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-6 py-4 rounded-xl font-bold hover:scale-105 transition-transform shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2"
+                    >
+                        <CheckCircle2 className="w-5 h-5" />
+                        Back to Home
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
+    // Waiting for Verification State (show QR)
+    return (
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center font-sans">
+            <div className="premium-card p-10 max-w-md w-full animate-scale-in">
+                {/* Success Icon */}
+                <div className="w-24 h-24 mx-auto mb-8 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center shadow-xl shadow-emerald-500/30 animate-bounce-subtle">
+                    <CheckCircle2 className="w-12 h-12 text-white" />
+                </div>
+
+                <h1 className="text-3xl font-bold mb-3 text-foreground">Payment Successful!</h1>
+                <p className="text-muted-foreground mb-6">
+                    Your order of {orderResult.itemCount} items from <span className="text-foreground font-medium">{orderResult.store}</span> has been placed.
+                </p>
+
+                {/* QR Code Section */}
+                <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-2xl p-6 mb-4">
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                        <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                        <p className="text-sm font-bold text-foreground">Exit Gate Pass</p>
+                    </div>
+
+                    {/* QR Code */}
+                    <div className="bg-white p-3 rounded-xl inline-block mb-4 shadow-lg">
+                        <QRCode value={qrPayload} size={180} />
+                    </div>
+
+                    <p className="font-mono text-xl font-bold text-foreground tracking-[0.2em] mb-2">
+                        {orderResult.gatePassToken}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Show this QR at exit for verification</p>
+                </div>
+
+                {/* Waiting Indicator */}
+                <div className="flex items-center justify-center gap-2 mb-4 text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-sm">Waiting for guard verification...</span>
+                </div>
+
+                {/* Warning */}
+                <p className="text-xs text-amber-500 bg-amber-500/10 p-3 rounded-xl border border-amber-500/20 mb-6">
+                    ⚠️ Do not close this screen until verified by security.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <Link
+                        href={`/orders/${orderResult.id}`}
+                        className="flex-1 bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-6 py-4 rounded-xl font-bold hover:scale-105 transition-transform shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2"
+                    >
+                        View Invoice
+                        <ArrowRight className="w-4 h-4" />
+                    </Link>
+                    <Link
+                        href="/orders"
+                        className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-foreground px-6 py-4 rounded-xl font-bold transition-colors flex items-center justify-center"
+                    >
+                        All Orders
+                    </Link>
+                </div>
+            </div>
+        </div>
+    );
 }
 
 export default function CheckoutPage() {
@@ -56,69 +212,9 @@ export default function CheckoutPage() {
         }
     };
 
-    // Success State
+    // Success State with Real-time Verification
     if (success && orderResult) {
-        // Generate QR payload for security guard
-        const qrPayload = JSON.stringify({
-            type: "GATE_PASS",
-            token: orderResult.gatePassToken
-        });
-
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center font-sans">
-                {/* Success Card */}
-                <div className="premium-card p-10 max-w-md w-full animate-scale-in">
-                    {/* Success Icon */}
-                    <div className="w-24 h-24 mx-auto mb-8 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-3xl flex items-center justify-center shadow-xl shadow-emerald-500/30 animate-bounce-subtle">
-                        <CheckCircle2 className="w-12 h-12 text-white" />
-                    </div>
-
-                    <h1 className="text-3xl font-bold mb-3 text-foreground">Payment Successful!</h1>
-                    <p className="text-muted-foreground mb-6">
-                        Your order of {orderResult.itemCount} items from <span className="text-foreground font-medium">{orderResult.store}</span> has been placed.
-                    </p>
-
-                    {/* QR Code Section */}
-                    <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-2xl p-6 mb-6">
-                        <div className="flex items-center justify-center gap-2 mb-4">
-                            <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                            <p className="text-sm font-bold text-foreground">Exit Gate Pass</p>
-                        </div>
-
-                        {/* QR Code */}
-                        <div className="bg-white p-3 rounded-xl inline-block mb-4 shadow-lg">
-                            <QRCode value={qrPayload} size={180} />
-                        </div>
-
-                        <p className="font-mono text-xl font-bold text-foreground tracking-[0.2em] mb-2">
-                            {orderResult.gatePassToken}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Show this QR at exit for verification</p>
-                    </div>
-
-                    {/* Warning */}
-                    <p className="text-xs text-amber-500 bg-amber-500/10 p-3 rounded-xl border border-amber-500/20 mb-6">
-                        ⚠️ Do not close this screen until you have exited the store.
-                    </p>
-
-                    <div className="flex flex-col sm:flex-row gap-3">
-                        <Link
-                            href={`/orders/${orderResult.id}`}
-                            className="flex-1 bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-6 py-4 rounded-xl font-bold hover:scale-105 transition-transform shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2"
-                        >
-                            View Invoice
-                            <ArrowRight className="w-4 h-4" />
-                        </Link>
-                        <Link
-                            href="/orders"
-                            className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-foreground px-6 py-4 rounded-xl font-bold transition-colors flex items-center justify-center"
-                        >
-                            All Orders
-                        </Link>
-                    </div>
-                </div>
-            </div>
-        );
+        return <SuccessWithVerification orderResult={orderResult} />;
     }
 
     return (
