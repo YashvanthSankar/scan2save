@@ -177,14 +177,12 @@ export default function GuardVerifyPage() {
                       console.error("Scanner error:", err);
                       setScannerError(true);
                     }}
-                    scanDelay={300} // Scan every 300ms
-                    formats={['qr_code']} // Optimize for QR codes
-                    allowMultiple={true}
+                    scanDelay={500}
+                    allowMultiple={false}
                     components={{
                       onOff: false,
                       torch: true,
-                      zoom: true,
-                      finder: false // We use our own custom finder overlay
+                      finder: false
                     }}
                     styles={{
                       container: { height: '100%', width: '100%' },

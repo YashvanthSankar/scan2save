@@ -93,11 +93,13 @@ export function CartProvider({ children, initialUserId }: CartProviderProps) {
 
     const addItem = async (product: { id: number; name: string; price: number; image?: string }, storeId: string) => {
         if (!userId) {
-            console.error('Cannot add item: User not logged in');
+            console.error('Cannot add item: User not logged in. userId:', userId);
             return;
         }
 
-        // Optimistic UI Update
+        console.log('Adding item:', { product, storeId, userId });
+
+        // Optimistic UI Update - include storeId!
         const tempId = Date.now(); // Temporary ID until we refresh
         setItems(prev => {
             const existing = prev.find(i => i.productId === product.id);
@@ -106,6 +108,7 @@ export function CartProvider({ children, initialUserId }: CartProviderProps) {
             }
             return [...prev, {
                 id: tempId,
+                storeId: storeId, // FIXED: Include storeId in new item
                 productId: product.id,
                 name: product.name,
                 price: product.price,
@@ -126,9 +129,11 @@ export function CartProvider({ children, initialUserId }: CartProviderProps) {
                 })
             });
 
+            const responseData = await res.json();
+            console.log('Add to cart response:', responseData);
+
             if (!res.ok) {
-                const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.error || 'Failed to add item');
+                throw new Error(responseData.error || 'Failed to add item');
             }
 
             // Refresh cart to get real IDs and synced state
