@@ -286,8 +286,8 @@ export default function ForRetailersPage() {
 
                                 <button
                                     className={`w-full py-3 rounded-xl font-bold transition-all ${plan.popular
-                                            ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/25 hover:scale-105'
-                                            : 'bg-white/5 border border-white/10 text-foreground hover:bg-white/10'
+                                        ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/25 hover:scale-105'
+                                        : 'bg-white/5 border border-white/10 text-foreground hover:bg-white/10'
                                         }`}
                                 >
                                     {plan.cta}
@@ -318,7 +318,7 @@ export default function ForRetailersPage() {
                                 Get Started Free
                             </Link>
                             <Link
-                                href="mailto:hello@scan2save.app"
+                                href="mailto:scan2save@yashvanth.com"
                                 className="px-8 py-4 rounded-xl font-bold text-foreground bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-2"
                             >
                                 <Clock className="w-4 h-4" />
