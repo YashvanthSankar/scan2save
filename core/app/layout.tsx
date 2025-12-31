@@ -43,7 +43,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${inter.className} ${jetbrainsMono.variable} antialiased`}
+        className={`${inter.variable} ${inter.className} ${jetbrainsMono.variable} antialiased`}
       >
         <CartProvider>
           <Background />
