@@ -155,15 +155,38 @@ export default function GuardVerifyPage() {
         {!scanResult && !loading && (
           <>
             <div className="premium-card overflow-hidden">
-              <div className="h-64 md:h-72 relative bg-black">
+              <div className="h-64 md:h-72 relative bg-black group">
+                {!scannerError && (
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 px-3 py-1 rounded-full bg-black/50 backdrop-blur-md border border-emerald-500/30 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse-glow" />
+                    <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Scanning Active</span>
+                  </div>
+                )}
                 {!scannerError ? (
                   <Scanner
                     onScan={(res) => {
-                      if (res && res.length > 0) {
+                      // Handle both array (new version) and object (old version) responses just in case
+                      if (Array.isArray(res) && res.length > 0) {
                         handleScan(res[0].rawValue);
+                      } else if (res && 'rawValue' in res) {
+                        // @ts-ignore - Handle potential single object fallback
+                        handleScan(res.rawValue);
                       }
                     }}
-                    onError={() => setScannerError(true)}
+                    onError={(err) => {
+                      console.error("Scanner error:", err);
+                      setScannerError(true);
+                    }}
+                    scanDelay={300} // Scan every 300ms
+                    formats={['qr_code']} // Optimize for QR codes
+                    allowMultiple={true}
+                    components={{
+                      audio: false,
+                      onOff: false,
+                      torch: true,
+                      zoom: true,
+                      finder: false // We use our own custom finder overlay
+                    }}
                     styles={{
                       container: { height: '100%', width: '100%' },
                       video: { objectFit: 'cover' }
