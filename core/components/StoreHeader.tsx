@@ -149,21 +149,21 @@ export default function StoreHeader({ storeName, storeId, q, category }: { store
 
                 {/* Search Bar */}
                 <div className="container mx-auto px-4 pb-4">
-                    <div className="relative w-full group">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center pointer-events-none group-focus-within:bg-primary/20 transition-colors">
-                            <Search className="w-4 h-4 text-primary" />
+                    <div className="relative w-full">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <Search className="w-5 h-5 text-muted-foreground" />
                         </div>
                         <input
                             type="text"
                             placeholder={`Search in ${storeName}...`}
-                            className="input-premium w-full !pl-14 !pr-12 py-3.5 text-sm"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-12 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                         {searchQuery && (
                             <button
                                 onClick={clearSearch}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-white/10 rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 hover:bg-white/10 rounded-lg transition-colors text-muted-foreground hover:text-foreground"
                             >
                                 <X className="w-4 h-4" />
                             </button>

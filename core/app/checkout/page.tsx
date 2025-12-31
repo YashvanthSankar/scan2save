@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, CreditCard, CheckCircle2, Loader2, ShieldCheck, AlertCircle, Sparkles, ArrowRight } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
 import { useRouter } from 'next/navigation';
+import QRCode from 'react-qr-code';
 
 interface OrderResult {
     id: string;
@@ -57,6 +58,12 @@ export default function CheckoutPage() {
 
     // Success State
     if (success && orderResult) {
+        // Generate QR payload for security guard
+        const qrPayload = JSON.stringify({
+            type: "GATE_PASS",
+            token: orderResult.gatePassToken
+        });
+
         return (
             <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center font-sans">
                 {/* Success Card */}
@@ -67,21 +74,32 @@ export default function CheckoutPage() {
                     </div>
 
                     <h1 className="text-3xl font-bold mb-3 text-foreground">Payment Successful!</h1>
-                    <p className="text-muted-foreground mb-8">
+                    <p className="text-muted-foreground mb-6">
                         Your order of {orderResult.itemCount} items from <span className="text-foreground font-medium">{orderResult.store}</span> has been placed.
                     </p>
 
-                    {/* Gate Pass */}
-                    <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-2xl p-6 mb-8">
-                        <div className="flex items-center justify-center gap-2 mb-3">
-                            <Sparkles className="w-4 h-4 text-emerald-400" />
-                            <p className="text-sm text-muted-foreground">Your Exit Gate Pass</p>
+                    {/* QR Code Section */}
+                    <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-2xl p-6 mb-6">
+                        <div className="flex items-center justify-center gap-2 mb-4">
+                            <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                            <p className="text-sm font-bold text-foreground">Exit Gate Pass</p>
                         </div>
-                        <p className="font-mono text-3xl font-bold text-foreground tracking-[0.3em] mb-2">
+
+                        {/* QR Code */}
+                        <div className="bg-white p-3 rounded-xl inline-block mb-4 shadow-lg">
+                            <QRCode value={qrPayload} size={180} />
+                        </div>
+
+                        <p className="font-mono text-xl font-bold text-foreground tracking-[0.2em] mb-2">
                             {orderResult.gatePassToken}
                         </p>
-                        <p className="text-xs text-muted-foreground">Show this at the exit for verification</p>
+                        <p className="text-xs text-muted-foreground">Show this QR at exit for verification</p>
                     </div>
+
+                    {/* Warning */}
+                    <p className="text-xs text-amber-500 bg-amber-500/10 p-3 rounded-xl border border-amber-500/20 mb-6">
+                        ⚠️ Do not close this screen until you have exited the store.
+                    </p>
 
                     <div className="flex flex-col sm:flex-row gap-3">
                         <Link
