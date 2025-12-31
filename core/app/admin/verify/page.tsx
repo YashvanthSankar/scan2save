@@ -181,7 +181,6 @@ export default function GuardVerifyPage() {
                     formats={['qr_code']} // Optimize for QR codes
                     allowMultiple={true}
                     components={{
-                      audio: false,
                       onOff: false,
                       torch: true,
                       zoom: true,
