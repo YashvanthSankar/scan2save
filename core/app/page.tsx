@@ -110,7 +110,7 @@ export default function LandingPage() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-8 animate-fade-in-up opacity-0 backdrop-blur-sm">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>AI-Powered Retail 2.0</span>
+            <span>Next Generation Shopping</span>
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           </div>
 
