@@ -127,7 +127,7 @@ export default function StoreHeader({ storeName, storeId, q, category }: { store
                     <input
                         type="text"
                         placeholder={`Search in ${storeName}...`}
-                        className="input-premium w-full pl-14 pr-12 py-3.5 text-sm"
+                        className="input-premium w-full !pl-14 !pr-12 py-3.5 text-sm"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
