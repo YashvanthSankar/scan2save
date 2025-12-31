@@ -13,16 +13,19 @@ import {
   Menu,
   X,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  MapPin
 } from 'lucide-react';
 
 const navItems = [
   { label: 'Overview', icon: LayoutDashboard, href: '/admin/dashboard' },
   { label: 'Manage Stores', icon: Store, href: '/admin/stores' },
+  { label: 'Product Locations', icon: MapPin, href: '/admin/products' },
   { label: 'QR Generator', icon: QrCode, href: '/admin/generate-qr' },
   { label: 'Guard Verify', icon: ShieldCheck, href: '/admin/verify' },
   { label: 'Users', icon: Users, href: '/admin/users' },
 ];
+
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

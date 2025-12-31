@@ -35,13 +35,14 @@ export function CartProvider({ children, initialUserId }: CartProviderProps) {
     const [loading, setLoading] = useState(false);
     const [userId, setUserId] = useState<string | null>(initialUserId || null);
 
-    // Fetch User ID on Mount (only if not provided from server), then fetch cart
+    // Fetch User ID on Mount and whenever we need to refresh
     useEffect(() => {
         const initCart = async () => {
-            let currentUserId = userId;
+            let currentUserId = initialUserId || userId;
+
+            // Always try to fetch from API if we don't have a userId
             if (!currentUserId) {
                 try {
-                    // First get the current user's ID
                     const userRes = await fetch('/api/user/me');
                     const userData = await userRes.json();
 
@@ -50,9 +51,14 @@ export function CartProvider({ children, initialUserId }: CartProviderProps) {
                         currentUserId = userData.user.id;
                     }
                 } catch (error) {
-                    console.error('Failed to init cart:', error);
+                    console.error('Failed to fetch user:', error);
                 }
+            } else if (initialUserId && userId !== initialUserId) {
+                // If server sent a new userId, update state
+                setUserId(initialUserId);
+                currentUserId = initialUserId;
             }
+
             if (currentUserId) {
                 await fetchCartForUser(currentUserId);
             }
@@ -91,13 +97,36 @@ export function CartProvider({ children, initialUserId }: CartProviderProps) {
         }
     };
 
+    // Helper to get userId - fetches from API if not available
+    const ensureUserId = async (): Promise<string | null> => {
+        if (userId) return userId;
+
+        try {
+            const userRes = await fetch('/api/user/me');
+            const userData = await userRes.json();
+
+            if (userData.success && userData.user?.id) {
+                setUserId(userData.user.id);
+                return userData.user.id;
+            }
+        } catch (error) {
+            console.error('Failed to fetch user:', error);
+        }
+        return null;
+    };
+
     const addItem = async (product: { id: number; name: string; price: number; image?: string }, storeId: string) => {
-        if (!userId) {
-            console.error('Cannot add item: User not logged in. userId:', userId);
+        // Fetch userId on-demand if not available (handles race condition after login)
+        const currentUserId = await ensureUserId();
+
+        if (!currentUserId) {
+            console.error('Cannot add item: User not logged in');
+            // Optionally redirect to login
+            window.location.href = '/login';
             return;
         }
 
-        console.log('Adding item:', { product, storeId, userId });
+        console.log('Adding item:', { product, storeId, userId: currentUserId });
 
         // Optimistic UI Update - include storeId!
         const tempId = Date.now(); // Temporary ID until we refresh
@@ -122,7 +151,7 @@ export function CartProvider({ children, initialUserId }: CartProviderProps) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    userId: userId,
+                    userId: currentUserId,
                     storeId: storeId,
                     productId: product.id,
                     quantity: 1
