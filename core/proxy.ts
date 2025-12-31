@@ -5,10 +5,20 @@ export function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // 1. Define Route Types
+  const publicPaths = [
+    '/',
+    '/login',
+    '/get-qrs',
+    '/privacy',
+    '/terms',
+    '/about',
+    '/contact',
+    '/for-retailers',
+    '/for-shoppers',
+  ];
+
   const isPublicRoute =
-    path === '/' ||
-    path === '/login' ||
-    path === '/get-qrs' || // Dev tool
+    publicPaths.includes(path) ||
     path.startsWith('/api') || // APIs handle their own auth usually, or strictly public
     path.startsWith('/_next') ||
     path.startsWith('/static') ||
