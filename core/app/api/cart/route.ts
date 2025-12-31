@@ -37,57 +37,60 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: true, cart: null, items: [] });
     }
 
-    // Fetch pricing AND Active Offers for each item
-    const itemsWithPricing = await Promise.all(
-      cart.items.map(async (item) => {
-        const storeProduct = await prisma.storeProduct.findUnique({
-          where: {
-            storeId_productId: {
-              storeId: cart.storeId,
-              productId: item.productId
-            }
-          },
-          select: {
-            price: true
-          }
-        });
+    // Get all product IDs from cart
+    const productIds = cart.items.map(item => item.productId);
 
-        // Check for active offer
-        const offer = await prisma.activeOffer.findFirst({
-          where: {
-            productId: item.productId,
-            validUntil: { gt: new Date() }
-          }
-        });
+    // Bulk fetch: Store products (1 query instead of N)
+    const storeProducts = await prisma.storeProduct.findMany({
+      where: {
+        storeId: cart.storeId,
+        productId: { in: productIds }
+      },
+      select: {
+        productId: true,
+        price: true
+      }
+    });
+    const priceMap = new Map(storeProducts.map(sp => [sp.productId, parseFloat(sp.price?.toString() || '0')]));
 
-        let finalPrice = parseFloat(storeProduct?.price?.toString() || '0');
-        const originalPrice = finalPrice;
+    // Bulk fetch: Active offers (1 query instead of N)
+    const offers = await prisma.activeOffer.findMany({
+      where: {
+        productId: { in: productIds },
+        validUntil: { gt: new Date() }
+      }
+    });
+    const offerMap = new Map(offers.map(o => [o.productId, o]));
 
-        if (offer) {
-          const discountMultiplier = (100 - offer.discountPercentage) / 100;
-          finalPrice = Math.round(originalPrice * discountMultiplier);
-        }
+    // Map items with pricing (no additional DB calls)
+    const itemsWithPricing = cart.items.map((item) => {
+      const originalPrice = priceMap.get(item.productId) || 0;
+      const offer = offerMap.get(item.productId);
 
-        return {
-          id: item.id,
-          storeId: cart.store?.storeId || cart.storeId, // Use slug if available
-          productId: item.product.id,
-          name: item.product.name,
-          price: finalPrice,
-          originalPrice: originalPrice, // Pass original for UI strikethrough
-          quantity: item.quantity,
-          image: item.product.imageUrl,
-          discountLabel: offer ? `${offer.discountPercentage}% OFF` : null
-        };
-      })
-    );
+      let finalPrice = originalPrice;
+      if (offer) {
+        const discountMultiplier = (100 - offer.discountPercentage) / 100;
+        finalPrice = Math.round(originalPrice * discountMultiplier);
+      }
 
+      return {
+        id: item.id,
+        storeId: cart.store?.storeId || cart.storeId,
+        productId: item.product.id,
+        name: item.product.name,
+        price: finalPrice,
+        originalPrice: originalPrice,
+        quantity: item.quantity,
+        image: item.product.imageUrl,
+        discountLabel: offer ? `${offer.discountPercentage}% OFF` : null
+      };
+    });
 
     return NextResponse.json({
       success: true,
       cart: {
         id: cart.id,
-        storeId: cart.store?.storeId || cart.storeId, // Use slug if available
+        storeId: cart.store?.storeId || cart.storeId,
       },
       items: itemsWithPricing,
     });
