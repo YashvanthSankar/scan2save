@@ -25,30 +25,40 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+interface CartProviderProps {
+    children: React.ReactNode;
+    initialUserId?: string | null;
+}
+
+export function CartProvider({ children, initialUserId }: CartProviderProps) {
     const [items, setItems] = useState<CartItem[]>([]);
     const [loading, setLoading] = useState(false);
-    const [userId, setUserId] = useState<string | null>(null);
+    const [userId, setUserId] = useState<string | null>(initialUserId || null);
 
-    // Fetch User ID on Mount, then fetch cart
+    // Fetch User ID on Mount (only if not provided from server), then fetch cart
     useEffect(() => {
         const initCart = async () => {
-            try {
-                // First get the current user's ID
-                const userRes = await fetch('/api/user/me');
-                const userData = await userRes.json();
+            let currentUserId = userId;
+            if (!currentUserId) {
+                try {
+                    // First get the current user's ID
+                    const userRes = await fetch('/api/user/me');
+                    const userData = await userRes.json();
 
-                if (userData.success && userData.user?.id) {
-                    setUserId(userData.user.id);
-                    // Now fetch cart with the real user ID
-                    await fetchCartForUser(userData.user.id);
+                    if (userData.success && userData.user?.id) {
+                        setUserId(userData.user.id);
+                        currentUserId = userData.user.id;
+                    }
+                } catch (error) {
+                    console.error('Failed to init cart:', error);
                 }
-            } catch (error) {
-                console.error('Failed to init cart:', error);
+            }
+            if (currentUserId) {
+                await fetchCartForUser(currentUserId);
             }
         };
         initCart();
-    }, []);
+    }, [initialUserId]); // Re-run if initialUserId changes
 
     const fetchCartForUser = async (uid: string) => {
         try {

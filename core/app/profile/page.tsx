@@ -1,89 +1,37 @@
-'use client';
-
 import Link from 'next/link';
 import {
   ArrowLeft,
   User,
   ShoppingBag,
   Clock,
-  Loader2,
-  LogOut,
   ChevronRight,
   Sparkles,
   Award,
   TrendingUp
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { redirect } from 'next/navigation';
+import { getSession } from '@/lib/session';
+import { getUserProfile } from '@/lib/data';
+import LogoutButton from './LogoutButton';
 
-interface UserProfile {
-  name: string;
-  phone: string;
-  memberSince: string;
-  role: string;
-}
+export default async function ProfilePage() {
+  const session = await getSession();
 
-interface UserStats {
-  totalSaved: number;
-  totalSpent: number;
-  points: number;
-  voucherCount: number;
-}
+  if (!session || !session.userId) {
+    redirect('/login');
+  }
 
-interface Transaction {
-  id: string;
-  store: string;
-  date: string;
-  items: number;
-  total: number;
-  status: string;
-}
+  const data = await getUserProfile(session.userId);
 
-
-export default function ProfilePage() {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [stats, setStats] = useState<UserStats | null>(null);
-  const [history, setHistory] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await fetch('/api/user/me');
-        if (res.status === 401 || res.status === 404) {
-          if (res.status === 404) {
-            setUser({ name: 'Guest (Invalid Session)', phone: 'Please Logout', memberSince: new Date().toISOString(), role: 'GUEST' });
-          }
-          setLoading(false);
-          return;
-        }
-        const data = await res.json();
-        if (data.success) {
-          setUser(data.user);
-          setStats(data.stats);
-          setHistory(data.history);
-        }
-      } catch (error) {
-        console.error("Failed to load profile", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, []);
-
-  if (loading) {
+  if (!data) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
-          <p className="text-muted-foreground text-sm">Loading profile...</p>
-        </div>
+        <p>Failed to load profile.</p>
       </div>
     );
   }
 
-  const displayUser = user || { name: 'Guest', phone: '', memberSince: new Date().toISOString(), role: 'GUEST' };
+  const { user, stats, history } = data;
 
   return (
     <div className="min-h-screen text-foreground font-sans pb-24 relative">
@@ -104,7 +52,7 @@ export default function ProfilePage() {
             {/* Avatar */}
             <div className="relative">
               <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 rounded-2xl flex items-center justify-center text-3xl font-bold text-white shadow-lg shadow-violet-500/30">
-                {displayUser.name ? displayUser.name.charAt(0).toUpperCase() : <User className="w-10 h-10" />}
+                {user.name ? user.name.charAt(0).toUpperCase() : <User className="w-10 h-10" />}
               </div>
               {/* Status dot */}
               <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-lg border-2 border-background flex items-center justify-center">
@@ -113,12 +61,12 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex-1 min-w-0">
-              <h2 className="text-2xl font-bold text-foreground truncate">{displayUser.name || 'User'}</h2>
-              <p className="text-muted-foreground text-sm">{displayUser.phone}</p>
+              <h2 className="text-2xl font-bold text-foreground truncate">{user.name || 'User'}</h2>
+              <p className="text-muted-foreground text-sm">{user.phone}</p>
               <div className="flex items-center gap-2 mt-2">
                 <Award className="w-3.5 h-3.5 text-amber-400" />
                 <span className="text-xs text-muted-foreground">
-                  Member since {new Date(displayUser.memberSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  Member since {new Date(user.memberSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                 </span>
               </div>
             </div>
@@ -201,25 +149,7 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* Settings */}
-        <div className="pt-4 border-t border-white/5 space-y-1">
-
-          <button
-            onClick={async () => {
-              await fetch('/api/auth/logout', { method: 'POST' });
-              window.location.href = '/login';
-            }}
-            className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-rose-500/10 transition-colors text-rose-400 group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center group-hover:bg-rose-500/20 transition-colors">
-                <LogOut className="w-5 h-5" />
-              </div>
-              <span className="font-bold">Log Out</span>
-            </div>
-            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </button>
-        </div>
+        <LogoutButton />
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import "./globals.css";
 import { CartProvider } from "@/lib/CartContext";
 import FloatingCart from "@/components/FloatingCart";
 import { Background } from "@/components/Background";
+import { getSession } from "@/lib/session";
 
 const bricolage = Bricolage_Grotesque({
   variable: "--font-sans",
@@ -35,17 +36,20 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getSession();
+  const userId = session?.userId || null;
+
   return (
     <html lang="en" className="dark">
       <body
         className={`${bricolage.variable} ${bricolage.className} ${jetbrainsMono.variable} antialiased`}
       >
-        <CartProvider>
+        <CartProvider initialUserId={userId}>
           <Background />
           {children}
           <FloatingCart />

@@ -247,3 +247,151 @@ export async function getUserOrders(userId: string) {
     return [];
   }
 }
+
+export async function getUserProfile(userId: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        transactions: {
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          include: {
+            store: true,
+            items: true
+          }
+        },
+        claimedOffers: true
+      }
+    });
+
+    if (!user) return null;
+
+    // Calculate Stats
+    const totalSpent = user.transactions.reduce((sum, tx) => sum + Number(tx.totalAmount), 0);
+    const points = Math.floor(totalSpent * 0.1);
+    const totalSaved = Math.floor(totalSpent * 0.12);
+
+    const history = user.transactions.map(tx => ({
+      id: tx.id,
+      store: tx.store?.name || 'Unknown Store',
+      date: tx.createdAt.toISOString(),
+      items: tx.items.length,
+      total: Number(tx.totalAmount),
+      status: tx.isPaid ? 'Completed' : 'Pending'
+    }));
+
+    return {
+      user: {
+        name: user.name || 'User',
+        phone: user.phoneNumber,
+        memberSince: user.createdAt.toISOString(),
+        role: user.role
+      },
+      stats: {
+        totalSaved,
+        totalSpent,
+        points,
+        voucherCount: user.claimedOffers.filter(o => !o.isUsed).length
+      },
+      history
+    };
+  } catch (error) {
+    console.error("Failed to load profile", error);
+    return null;
+  }
+}
+
+export async function getAdminStats(userId: string) {
+  try {
+    // Verify Admin
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.role !== 'ADMIN') return null;
+
+    // Fetch counts in parallel
+    const [storeCount, userCount, transactionCount, recentStores] = await Promise.all([
+      prisma.store.count({ where: { isActive: true } }),
+      prisma.user.count(),
+      prisma.transaction.count(),
+      prisma.store.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        select: {
+          id: true,
+          storeId: true,
+          name: true,
+          location: true,
+          isActive: true,
+          createdAt: true
+        }
+      })
+    ]);
+
+    return {
+      stats: {
+        stores: storeCount,
+        users: userCount,
+        transactions: transactionCount
+      },
+      recentStores: recentStores.map(s => ({
+        ...s,
+        createdAt: s.createdAt.toISOString()
+      }))
+    };
+  } catch (error) {
+    console.error('Failed to fetch admin stats', error);
+    return null;
+  }
+}
+
+export async function getAdminStores(userId: string) {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.role !== 'ADMIN') return null;
+
+    const stores = await prisma.store.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        storeId: true,
+        name: true,
+        location: true,
+        lat: true,
+        lng: true,
+        isActive: true
+      }
+    });
+    return stores;
+  } catch (error) {
+    console.error('Failed to fetch admin stores', error);
+    return [];
+  }
+}
+
+export async function getAdminUsers(userId: string) {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.role !== 'ADMIN') return null;
+
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        _count: {
+          select: { transactions: true }
+        }
+      }
+    });
+
+    return users.map(u => ({
+      id: u.id,
+      name: u.name,
+      phone: u.phoneNumber,
+      role: u.role,
+      joinedAt: u.createdAt.toISOString(),
+      transactionCount: u._count.transactions
+    }));
+  } catch (error) {
+    console.error('Failed to fetch admin users', error);
+    return [];
+  }
+}

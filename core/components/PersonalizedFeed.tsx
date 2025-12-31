@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
     Sparkles,
     ShoppingBag,
@@ -26,6 +26,14 @@ interface Offer {
     };
 }
 
+interface CachedData {
+    offers: Offer[];
+    persona: string;
+    timestamp: number;
+}
+
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export default function PersonalizedFeed({ storeId }: { storeId: string }) {
     const [offers, setOffers] = useState<Offer[]>([]);
     const [loading, setLoading] = useState(true);
@@ -33,9 +41,33 @@ export default function PersonalizedFeed({ storeId }: { storeId: string }) {
     const [claimedOffers, setClaimedOffers] = useState<Record<number, string>>({});
     const [claiming, setClaiming] = useState<number | null>(null);
     const { items, addItem, decrementItem } = useCart();
+    const hasFetched = useRef(false);
 
     useEffect(() => {
+        // Prevent duplicate fetches in StrictMode or re-renders
+        if (hasFetched.current) return;
+
+        const cacheKey = `personalizedFeed_${storeId}`;
+
         const fetchOffers = async () => {
+            // Check sessionStorage cache first
+            try {
+                const cachedStr = sessionStorage.getItem(cacheKey);
+                if (cachedStr) {
+                    const cached: CachedData = JSON.parse(cachedStr);
+                    if (Date.now() - cached.timestamp < CACHE_DURATION) {
+                        setOffers(cached.offers);
+                        setPersona(cached.persona);
+                        setLoading(false);
+                        hasFetched.current = true;
+                        return;
+                    }
+                }
+            } catch (e) {
+                // Ignore cache read errors
+            }
+
+            // Fetch from API
             try {
                 const res = await fetch('/api/scan', {
                     method: 'POST',
@@ -50,11 +82,23 @@ export default function PersonalizedFeed({ storeId }: { storeId: string }) {
                 if (data.success) {
                     setOffers(data.offers);
                     setPersona(data.persona);
+
+                    // Cache the response
+                    try {
+                        sessionStorage.setItem(cacheKey, JSON.stringify({
+                            offers: data.offers,
+                            persona: data.persona,
+                            timestamp: Date.now()
+                        }));
+                    } catch (e) {
+                        // Ignore cache write errors
+                    }
                 }
             } catch (err) {
                 console.error("Failed to load offers", err);
             } finally {
                 setLoading(false);
+                hasFetched.current = true;
             }
         };
 

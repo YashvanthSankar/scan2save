@@ -1,66 +1,35 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   TrendingUp,
   Store,
   Users,
   QrCode,
   ArrowUpRight,
-  Loader2,
   ShoppingCart,
   Sparkles
 } from 'lucide-react';
-import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { getSession } from '@/lib/session';
+import { getAdminStats } from '@/lib/data';
 
-interface Stats {
-  stores: number;
-  users: number;
-  transactions: number;
-}
+export default async function AdminDashboard() {
+  const session = await getSession();
 
-interface RecentStore {
-  id: string;
-  storeId: string;
-  name: string;
-  location: string;
-  isActive: boolean;
-  createdAt: string;
-}
+  if (!session || !session.userId) {
+    redirect('/login');
+  }
 
-export default function AdminDashboard() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [recentStores, setRecentStores] = useState<RecentStore[]>([]);
-  const [loading, setLoading] = useState(true);
+  const data = await getAdminStats(session.userId);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch('/api/admin/stats');
-        const data = await res.json();
-        if (data.success) {
-          setStats(data.stats);
-          setRecentStores(data.recentStores);
-        }
-      } catch (err) {
-        console.error('Failed to load dashboard stats', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
-  if (loading) {
+  if (!data) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
-          <p className="text-muted-foreground text-sm">Loading dashboard...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-rose-500">Access Denied or Failed to Load Data</p>
       </div>
     );
   }
+
+  const { stats, recentStores } = data;
 
   return (
     <div className="space-y-6 md:space-y-8">
@@ -88,14 +57,15 @@ export default function AdminDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
         {[
-          { label: 'Active Stores', value: stats?.stores ?? 0, icon: Store, gradient: 'from-blue-500 to-cyan-500' },
-          { label: 'Registered Users', value: stats?.users ?? 0, icon: Users, gradient: 'from-indigo-500 to-violet-500' },
-          { label: 'Total Transactions', value: stats?.transactions ?? 0, icon: ShoppingCart, gradient: 'from-emerald-500 to-teal-500' },
+          { label: 'Active Stores', value: stats.stores, icon: Store, gradient: 'from-blue-500 to-cyan-500' },
+          { label: 'Registered Users', value: stats.users, icon: Users, gradient: 'from-indigo-500 to-violet-500' },
+          { label: 'Total Transactions', value: stats.transactions, icon: ShoppingCart, gradient: 'from-emerald-500 to-teal-500' },
         ].map((stat, i) => (
           <div
             key={i}
-            className="premium-card p-5 md:p-6 group hover:border-primary/30 transition-all animate-fade-in-up opacity-0"
-            style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'forwards' }}
+            className="premium-card p-5 md:p-6 group hover:border-primary/30 transition-all animate-fade-in-up"
+          // Server components shouldn't ideally rely on client-side JS for basic animations if performance is key, but CSS animations are fine
+          // Removed opacity-0 and animation delay styles for server simplicity, let CSS handle it or just static render
           >
             <div className="flex items-center justify-between mb-4">
               <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.gradient} shadow-lg`}>
@@ -146,19 +116,18 @@ export default function AdminDashboard() {
               No stores registered yet. <Link href="/admin/stores" className="text-primary">Add one now →</Link>
             </div>
           ) : (
-            recentStores.map((store, index) => (
+            recentStores.map((store) => (
               <div
                 key={store.id}
-                className="p-4 flex items-center justify-between animate-fade-in-up opacity-0"
-                style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
+                className="p-4 flex items-center justify-between animate-fade-in-up"
               >
                 <div className="flex-1 min-w-0">
                   <h4 className="font-bold text-foreground truncate">{store.name}</h4>
                   <p className="text-xs text-muted-foreground truncate">{store.location}</p>
                   <div className="mt-2">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${store.isActive
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                       }`}>
                       {store.isActive ? 'Active' : 'Inactive'}
                     </span>
@@ -187,18 +156,17 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {recentStores.map((store, index) => (
+              {recentStores.map((store) => (
                 <tr
                   key={store.id}
-                  className="hover:bg-white/[0.02] transition-colors animate-fade-in-up opacity-0"
-                  style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'forwards' }}
+                  className="hover:bg-white/[0.02] transition-colors animate-fade-in-up"
                 >
                   <td className="px-6 py-4 font-bold text-foreground">{store.name}</td>
                   <td className="px-6 py-4 text-muted-foreground">{store.location}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${store.isActive
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                       }`}>
                       {store.isActive ? 'Active' : 'Inactive'}
                     </span>
