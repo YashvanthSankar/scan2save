@@ -1,10 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from '@/lib/supabase';
 
 export async function GET(
   request: Request,
@@ -52,7 +47,9 @@ export async function GET(
       })),
     };
 
-    return NextResponse.json({ success: true, product: productWithPricing });
+    const response = NextResponse.json({ success: true, product: productWithPricing });
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    return response;
   } catch (error) {
     console.error('Error fetching product:', error);
     return NextResponse.json(

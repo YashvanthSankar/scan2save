@@ -93,6 +93,41 @@ async function getStoreProducts(storeId: string, category?: string, query?: stri
     }
 }
 
+// OPTIMIZATION: Separate lightweight query for categories only
+async function getStoreCategories(storeId: string): Promise<string[]> {
+    try {
+        const store = await prisma.store.findFirst({
+            where: {
+                OR: [
+                    { storeId: storeId },
+                    { id: storeId }
+                ]
+            },
+            select: { id: true }
+        });
+
+        if (!store) return [];
+
+        const products = await prisma.storeProduct.findMany({
+            where: {
+                storeId: store.id,
+                inStock: true
+            },
+            select: {
+                product: {
+                    select: { category: true }
+                }
+            },
+            distinct: ['productId']
+        });
+
+        return [...new Set(products.map(p => p.product.category))];
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+        return [];
+    }
+}
+
 export default async function StoreFront({ params, searchParams }: StorePageProps) {
     const { storeId } = await params;
     const { q, category } = await searchParams;
@@ -100,14 +135,15 @@ export default async function StoreFront({ params, searchParams }: StorePageProp
     const store = await getStoreData(storeId);
     if (!store) return notFound();
 
-    const storeProducts = await getStoreProducts(
-        storeId,
-        typeof category === 'string' ? category : undefined,
-        typeof q === 'string' ? q : undefined
-    );
-
-    const allProducts = await getStoreProducts(storeId);
-    const categories: string[] = Array.from(new Set(allProducts.map((p: any) => p.category)));
+    // OPTIMIZATION: Fetch products and categories in parallel
+    const [storeProducts, categories] = await Promise.all([
+        getStoreProducts(
+            storeId,
+            typeof category === 'string' ? category : undefined,
+            typeof q === 'string' ? q : undefined
+        ),
+        getStoreCategories(storeId)
+    ]);
 
     return (
         <div className="min-h-screen text-foreground selection:bg-primary/30 font-sans pb-32 relative">
