@@ -143,24 +143,50 @@ export const PRODUCTS = [
 
 export async function getUserDashboardData(userId: string) {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        transactions: {
-          orderBy: { createdAt: 'desc' },
-          take: 5,
-          include: {
-            store: true,
-            items: true
+    // OPTIMIZATION: Run user data and cart queries in parallel
+    const [user, cart] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          phoneNumber: true,
+          createdAt: true,
+          role: true,
+          transactions: {
+            orderBy: { createdAt: 'desc' },
+            take: 5,
+            select: {
+              id: true,
+              totalAmount: true,
+              isPaid: true,
+              createdAt: true,
+              store: {
+                select: { name: true, location: true }
+              },
+              _count: { select: { items: true } }
+            }
+          },
+          claimedOffers: {
+            where: { isUsed: false },
+            select: { id: true }
+          },
+          _count: {
+            select: { transactions: true }
           }
-        },
-        claimedOffers: true
-      }
-    });
+        }
+      }),
+      prisma.cart.findUnique({
+        where: { userId },
+        select: {
+          _count: { select: { items: true } }
+        }
+      })
+    ]);
 
     if (!user) return null;
 
-    // Calculate Stats
+    // Calculate Stats from transactions
     const totalSpent = user.transactions.reduce((sum, tx) => sum + Number(tx.totalAmount), 0);
     const points = Math.floor(totalSpent * 0.1);
     const totalSaved = Math.floor(totalSpent * 0.12);
@@ -170,19 +196,12 @@ export async function getUserDashboardData(userId: string) {
       store: tx.store?.name || 'Unknown Store',
       loc: tx.store?.location || 'Online',
       date: tx.createdAt.toISOString(),
-      items: tx.items.length,
+      items: tx._count.items,
       total: Number(tx.totalAmount),
       status: tx.isPaid ? 'Completed' : 'Pending',
       formattedAmount: `₹${Number(tx.totalAmount).toLocaleString()}`,
       icon: (tx.store?.name || '').toLowerCase().includes('coffee') ? '☕' : ((tx.store?.name || '').toLowerCase().includes('online') ? '📦' : '🛒')
     }));
-
-    // Get Cart Count
-    const cart = await prisma.cart.findUnique({
-      where: { userId },
-      include: { items: true }
-    });
-    const cartCount = cart?.items.length || 0;
 
     return {
       user: {
@@ -196,10 +215,10 @@ export async function getUserDashboardData(userId: string) {
         totalSaved,
         totalSpent,
         points,
-        voucherCount: user.claimedOffers.filter(o => !o.isUsed).length
+        voucherCount: user.claimedOffers.length
       },
       history: recentActivity,
-      cartCount
+      cartCount: cart?._count.items || 0
     };
   } catch (error) {
     console.error('Failed to fetch dashboard data:', error);
@@ -250,18 +269,30 @@ export async function getUserOrders(userId: string) {
 
 export async function getUserProfile(userId: string) {
   try {
+    // OPTIMIZATION: Use select for specific fields, _count for items
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: {
+      select: {
+        name: true,
+        phoneNumber: true,
+        createdAt: true,
+        role: true,
         transactions: {
           orderBy: { createdAt: 'desc' },
           take: 5,
-          include: {
-            store: true,
-            items: true
+          select: {
+            id: true,
+            totalAmount: true,
+            isPaid: true,
+            createdAt: true,
+            store: { select: { name: true } },
+            _count: { select: { items: true } }
           }
         },
-        claimedOffers: true
+        claimedOffers: {
+          where: { isUsed: false },
+          select: { id: true }
+        }
       }
     });
 
@@ -276,7 +307,7 @@ export async function getUserProfile(userId: string) {
       id: tx.id,
       store: tx.store?.name || 'Unknown Store',
       date: tx.createdAt.toISOString(),
-      items: tx.items.length,
+      items: tx._count.items,
       total: Number(tx.totalAmount),
       status: tx.isPaid ? 'Completed' : 'Pending'
     }));
@@ -292,7 +323,7 @@ export async function getUserProfile(userId: string) {
         totalSaved,
         totalSpent,
         points,
-        voucherCount: user.claimedOffers.filter(o => !o.isUsed).length
+        voucherCount: user.claimedOffers.length
       },
       history
     };

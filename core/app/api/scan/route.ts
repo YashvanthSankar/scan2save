@@ -18,27 +18,29 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
         }
 
-        // 2. Get User Transaction History (Last 10)
-        const userTransactions = await prisma.transaction.findMany({
-            where: { userId: userId },
-            include: {
-                items: {
-                    include: { product: true }
-                }
-            },
-            orderBy: { createdAt: 'desc' },
-            take: 10
-        });
+        // OPTIMIZATION: Fetch user history and offers in parallel
+        const [userTransactions, allOffers] = await Promise.all([
+            // User Transaction History (Last 10)
+            prisma.transaction.findMany({
+                where: { userId: userId },
+                include: {
+                    items: {
+                        include: { product: true }
+                    }
+                },
+                orderBy: { createdAt: 'desc' },
+                take: 10
+            }),
+            // All Valid Active Offers
+            prisma.activeOffer.findMany({
+                where: { validUntil: { gt: new Date() } },
+                include: { product: true }
+            })
+        ]);
 
         const hasHistory = userTransactions.length > 0;
         let recommendedOffers: any[] = [];
         let persona = 'New Shopper';
-
-        // 3. Fetch All Valid Active Offers
-        const allOffers = await prisma.activeOffer.findMany({
-            where: { validUntil: { gt: new Date() } },
-            include: { product: true }
-        });
 
         // 4. PERSONALIZATION LOGIC
         if (hasHistory) { // Try personalization if history exists

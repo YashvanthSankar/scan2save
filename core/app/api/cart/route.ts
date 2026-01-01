@@ -48,10 +48,12 @@ export async function GET(request: Request) {
       },
       select: {
         productId: true,
-        price: true
+        price: true,
+        aisle: true
       }
     });
     const priceMap = new Map(storeProducts.map(sp => [sp.productId, parseFloat(sp.price?.toString() || '0')]));
+    const aisleMap = new Map(storeProducts.map(sp => [sp.productId, sp.aisle || 'Unknown']));
 
     // Bulk fetch: Active offers (1 query instead of N)
     const offers = await prisma.activeOffer.findMany({
@@ -82,6 +84,7 @@ export async function GET(request: Request) {
         originalPrice: originalPrice,
         quantity: item.quantity,
         image: item.product.imageUrl,
+        aisle: aisleMap.get(item.productId) || 'Unknown',
         discountLabel: offer ? `${offer.discountPercentage}% OFF` : null
       };
     });

@@ -10,6 +10,7 @@ interface CartItem {
     price: number;
     quantity: number;
     image?: string;
+    aisle?: string; // For in-store navigation
 }
 
 interface CartContextType {
@@ -80,7 +81,8 @@ export function CartProvider({ children, initialUserId }: CartProviderProps) {
                     name: item.name,
                     price: item.price,
                     quantity: item.quantity,
-                    image: item.image
+                    image: item.image,
+                    aisle: item.aisle
                 }));
                 setItems(mappedItems);
             }

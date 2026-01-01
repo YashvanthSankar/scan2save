@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowLeft, Trash2, CreditCard, Minus, Plus, ShoppingBag, Loader2, Sparkles } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
 import { useState, useEffect } from 'react';
+import ShoppingRoute from '@/components/ShoppingRoute';
 
 export default function CartPage() {
   const { items, removeItem, addItem, decrementItem, totalItems, totalAmount, loading } = useCart();
@@ -63,6 +64,11 @@ export default function CartPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Shopping Route Navigation */}
+        <div className="lg:col-span-2">
+          <ShoppingRoute items={items} />
+        </div>
+
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-4">
           {items.map((item, index) => (
