@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/lib/CartContext";
+import { InstallProvider } from "@/lib/InstallContext";
 import FloatingCart from "@/components/FloatingCart";
 import { Background } from "@/components/Background";
 import { getSession } from "@/lib/session";
@@ -49,12 +50,15 @@ export default async function RootLayout({
       <body
         className={`${bricolage.variable} ${bricolage.className} ${jetbrainsMono.variable} antialiased`}
       >
-        <CartProvider initialUserId={userId}>
-          <Background />
-          {children}
-          <FloatingCart />
-        </CartProvider>
+        <InstallProvider>
+          <CartProvider initialUserId={userId}>
+            <Background />
+            {children}
+            <FloatingCart />
+          </CartProvider>
+        </InstallProvider>
       </body>
     </html>
   );
 }
+

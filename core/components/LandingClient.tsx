@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Download } from 'lucide-react';
+import { useInstall } from '@/lib/InstallContext';
 
 interface LandingNavProps {
     children: React.ReactNode;
@@ -10,18 +11,30 @@ interface LandingNavProps {
 
 /**
  * Client-side navigation component for the landing page.
- * Handles scroll detection and mobile menu state.
- * Extracted as a client island to keep the rest of the landing page as server component.
+ * Handles scroll detection, mobile menu state, and install button.
  */
 export function LandingNav({ children }: LandingNavProps) {
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const { canInstall, triggerInstall, isInstalled } = useInstall();
+    const [isInstalling, setIsInstalling] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 50);
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    const handleInstall = async () => {
+        if (canInstall) {
+            setIsInstalling(true);
+            await triggerInstall();
+            setIsInstalling(false);
+        }
+    };
+
+    // Don't show install button if already installed
+    const showInstallButton = !isInstalled;
 
     return (
         <nav className={`
@@ -37,13 +50,44 @@ export function LandingNav({ children }: LandingNavProps) {
             <div className="px-6 flex justify-between items-center">
                 {children}
 
-                {/* Mobile Menu Toggle */}
-                <button
-                    className="md:hidden p-2 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors ml-3"
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                >
-                    {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                </button>
+                {/* Nav Actions */}
+                <div className="flex items-center gap-3">
+                    {/* Install Button - Always visible, triggers install or goes to install page */}
+                    {showInstallButton && (
+                        canInstall ? (
+                            // If install prompt is available, trigger it directly
+                            <button
+                                onClick={handleInstall}
+                                disabled={isInstalling}
+                                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-xl text-sm font-medium transition-all hover:scale-105 disabled:opacity-50"
+                            >
+                                {isInstalling ? (
+                                    <div className="w-4 h-4 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin" />
+                                ) : (
+                                    <Download className="w-4 h-4" />
+                                )}
+                                <span>Install</span>
+                            </button>
+                        ) : (
+                            // Otherwise, link to install page
+                            <Link
+                                href="/install"
+                                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-xl text-sm font-medium transition-all hover:scale-105"
+                            >
+                                <Download className="w-4 h-4" />
+                                <span>Install</span>
+                            </Link>
+                        )
+                    )}
+
+                    {/* Mobile Menu Toggle */}
+                    <button
+                        className="md:hidden p-2 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors"
+                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    >
+                        {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                    </button>
+                </div>
             </div>
 
             {/* Mobile Menu Overlay */}
@@ -64,6 +108,32 @@ export function LandingNav({ children }: LandingNavProps) {
                                 {item.label}
                             </Link>
                         ))}
+
+                        {/* Install button in mobile menu - Always visible */}
+                        {showInstallButton && (
+                            canInstall ? (
+                                <button
+                                    onClick={() => {
+                                        handleInstall();
+                                        setMobileMenuOpen(false);
+                                    }}
+                                    disabled={isInstalling}
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-xl font-medium transition-colors"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Install App
+                                </button>
+                            ) : (
+                                <Link
+                                    href="/install"
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-xl font-medium transition-colors"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Install App
+                                </Link>
+                            )
+                        )}
                     </div>
                 </div>
             )}

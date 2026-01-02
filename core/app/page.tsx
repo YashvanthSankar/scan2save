@@ -19,7 +19,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen text-foreground font-sans selection:bg-primary/30 overflow-x-hidden relative">
 
-      {/* 1. NAVIGATION - Client Component for interactivity */}
+      {/* 1. NAVIGATION - Client Component with Install button */}
       <LandingNav>
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
@@ -118,6 +118,83 @@ export default function LandingPage() {
         </div>
 
       </main>
+
+      {/* INSTALL APP SECTION - Always Visible */}
+      <section className="relative z-10 py-16 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="premium-card p-8 md:p-12 relative overflow-hidden">
+            {/* Gradient Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/10 via-violet-600/5 to-transparent" />
+            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px]" />
+
+            <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+              {/* Phone Mockup */}
+              <div className="flex-shrink-0">
+                <div className="w-48 h-80 bg-gradient-to-b from-[#0a0f1a] to-[#030712] rounded-[2.5rem] border border-white/10 p-2 shadow-2xl shadow-black/50 relative">
+                  <div className="w-full h-full bg-[#030712] rounded-[2rem] overflow-hidden">
+                    {/* Notch */}
+                    <div className="absolute top-3 left-1/2 -translate-x-1/2 w-16 h-5 bg-black rounded-full z-10" />
+                    {/* App Screen */}
+                    <div className="pt-10 px-3 space-y-2">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg" />
+                        <div className="text-[10px] text-white font-bold">Scan2Save</div>
+                      </div>
+                      <div className="bg-white/5 rounded-lg p-2">
+                        <div className="text-[8px] text-emerald-400">🔥 20% OFF</div>
+                        <div className="text-[10px] text-white">Fresh Groceries</div>
+                      </div>
+                      <div className="bg-white/5 rounded-lg p-2">
+                        <div className="text-[8px] text-amber-400">⚡ Flash Deal</div>
+                        <div className="text-[10px] text-white">Electronics</div>
+                      </div>
+                      <div className="bg-white/5 rounded-lg p-2">
+                        <div className="text-[8px] text-indigo-400">✨ For You</div>
+                        <div className="text-[10px] text-white">Daily Essentials</div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Glow Effect */}
+                  <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-32 h-8 bg-indigo-500/30 blur-xl rounded-full" />
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 text-center md:text-left">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-4">
+                  <Smartphone className="w-3 h-3" />
+                  Free Download
+                </div>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+                  Get the App on Your <span className="gradient-text">Home Screen</span>
+                </h2>
+                <p className="text-muted-foreground mb-6 max-w-md">
+                  Install Scan2Save for lightning-fast access, offline browsing, and instant notifications for the best deals.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center gap-3 justify-center md:justify-start">
+                  <Link
+                    href="/install"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-105 transition-all"
+                  >
+                    <Smartphone className="w-5 h-5" />
+                    Install Now
+                  </Link>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                      No app store
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Zap className="w-4 h-4 text-amber-400" />
+                      Instant
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* 3. FEATURES GRID */}
       <section id="features" className="relative z-10 py-24 px-6 max-w-7xl mx-auto">
@@ -283,8 +360,9 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h4 className="font-bold text-foreground mb-4">Legal</h4>
+              <h4 className="font-bold text-foreground mb-4">Get the App</h4>
               <ul className="space-y-3 text-sm text-muted-foreground">
+                <li><Link href="/install" className="hover:text-foreground transition-colors flex items-center gap-2">Install App</Link></li>
                 <li><Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
                 <li><Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link></li>
                 <li><a href="mailto:scan2save@yashvanth.com" className="hover:text-foreground transition-colors">Support</a></li>
