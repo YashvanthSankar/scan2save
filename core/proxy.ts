@@ -15,6 +15,7 @@ export function proxy(request: NextRequest) {
     '/contact',
     '/for-retailers',
     '/for-shoppers',
+    '/install', // PWA install page - should be accessible without login
   ];
 
   const isPublicRoute =

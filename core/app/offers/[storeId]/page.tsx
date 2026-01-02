@@ -77,23 +77,20 @@ async function getRecommendations(userId: string, storeId: string) {
       include: {
         product: true
       },
-      take: 8,
-      orderBy: {
-        createdAt: 'desc'
-      }
+      take: 8
     });
 
     // Transform to recommendation format
     const recommendations: Offer[] = storeProducts.map((sp, index) => ({
-      id: sp.id,
+      id: String(sp.id),
       title: `Special Offer on ${sp.product.name}`,
       discount_percentage: 10 + Math.floor(Math.random() * 20),
       relevanceScore: 0.9 - (index * 0.05),
       product: {
-        id: sp.product.id,
+        id: String(sp.product.id),
         name: sp.product.name,
         category: sp.product.category,
-        description: sp.product.description || 'Quality product at great prices',
+        description: 'Quality product at great prices',
         image_url: sp.product.imageUrl || 'https://placehold.co/600x400',
       },
       price: Number(sp.price) * 0.85,
@@ -107,6 +104,7 @@ async function getRecommendations(userId: string, storeId: string) {
       type: `${cat} Enthusiast`,
       confidence: 0.85 - (i * 0.15)
     }));
+
 
     return { recommendations, personas };
   } catch (error) {
