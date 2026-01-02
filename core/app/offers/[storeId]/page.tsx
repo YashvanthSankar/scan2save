@@ -1,8 +1,11 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Sparkles, TrendingUp, Clock, Store, ArrowRight, BrainCircuit, Loader2, ShoppingCart } from 'lucide-react';
+import Image from 'next/image';
+import { Sparkles, TrendingUp, Store, ArrowRight, BrainCircuit, Loader2 } from 'lucide-react';
+import { getSession } from '@/lib/session';
+import { redirect } from 'next/navigation';
+
+// OPTIMIZATION: Server Component for initial data fetching
+// Moved from client-side useEffect to server-side data fetching
 
 interface Offer {
   id: string;
@@ -21,58 +24,58 @@ interface Offer {
   aisle: string;
 }
 
-export default function PersonalizedOffersPage({ params }: { params: Promise<{ storeId: string }> }) {
-  const [storeId, setStoreId] = useState<string>('');
-  const [recommendations, setRecommendations] = useState<Offer[]>([]);
-  const [personas, setPersonas] = useState<any[]>([]);
-  const [storeName, setStoreName] = useState('');
-  const [loading, setLoading] = useState(true);
-  const userId = '00000000-0000-0000-0000-000000000002';
+interface Persona {
+  type: string;
+  confidence: number;
+}
 
-  useEffect(() => {
-    params.then(({ storeId }) => {
-      setStoreId(storeId);
-      fetchRecommendations(storeId);
-      fetchStoreInfo(storeId);
+async function getStoreInfo(storeId: string) {
+  try {
+    // Use absolute URL for server-side fetch
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/stores/${storeId}`, {
+      cache: 'force-cache', // Cache store info
+      next: { revalidate: 3600 } // Revalidate every hour
     });
-  }, [params]);
-
-  const fetchStoreInfo = async (id: string) => {
-    try {
-      const res = await fetch(`/api/stores/${id}`);
-      const data = await res.json();
-      if (data.success) setStoreName(data.store.name);
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
-
-  const fetchRecommendations = async (id: string) => {
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/recommendations?userId=${userId}&storeId=${id}`);
-      const data = await res.json();
-      if (data.success) {
-        setRecommendations(data.recommendations);
-        setPersonas(data.userPersonas || []);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
-          <p className="text-foreground text-lg font-medium">Analyzing your shopping profile...</p>
-        </div>
-      </div>
-    );
+    const data = await res.json();
+    return data.success ? data.store : null;
+  } catch (error) {
+    console.error('Error fetching store:', error);
+    return null;
   }
+}
+
+async function getRecommendations(userId: string, storeId: string) {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/recommendations?userId=${userId}&storeId=${storeId}`, {
+      cache: 'no-store' // Always get fresh recommendations
+    });
+    const data = await res.json();
+    return data.success ? { recommendations: data.recommendations, personas: data.userPersonas || [] } : { recommendations: [], personas: [] };
+  } catch (error) {
+    console.error('Error fetching recommendations:', error);
+    return { recommendations: [], personas: [] };
+  }
+}
+
+interface PageProps {
+  params: Promise<{ storeId: string }>;
+}
+
+export default async function PersonalizedOffersPage({ params }: PageProps) {
+  const { storeId } = await params;
+
+  const session = await getSession();
+  const userId = session?.userId || '00000000-0000-0000-0000-000000000002';
+
+  // OPTIMIZATION: Parallel fetch for store info and recommendations
+  const [store, { recommendations, personas }] = await Promise.all([
+    getStoreInfo(storeId),
+    getRecommendations(userId, storeId)
+  ]);
+
+  const storeName = store?.name || 'Store';
 
   return (
     <div className="min-h-screen text-foreground font-sans pb-24 relative">
@@ -93,7 +96,7 @@ export default function PersonalizedOffersPage({ params }: { params: Promise<{ s
           </div>
           {personas.length > 0 && (
             <div className="flex flex-wrap justify-center gap-3">
-              {personas.map((persona: any, i: number) => (
+              {personas.map((persona: Persona, i: number) => (
                 <div key={i} className="bg-background/40 backdrop-blur-md border border-border px-4 py-2 rounded-full flex items-center gap-2 shadow-sm">
                   <BrainCircuit className="w-4 h-4 text-blue-500" />
                   <span className="font-medium text-foreground">{persona.type}</span>
@@ -116,19 +119,27 @@ export default function PersonalizedOffersPage({ params }: { params: Promise<{ s
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {recommendations.map((offer, index) => {
+            {recommendations.map((offer: Offer, index: number) => {
               const savings = offer.originalPrice - offer.price;
               return (
                 <Link key={offer.id} href={`/product/${offer.product.id}`} className="group">
-                  <div className="bg-card/40 backdrop-blur-md rounded-2xl overflow-hidden border border-border hover:border-blue-500/50 transition-all shadow-sm hover:shadow-lg">
+                  <div className="bg-card/40 backdrop-blur-md rounded-2xl overflow-hidden border border-border hover:border-blue-500/50 transition-all shadow-sm hover:shadow-lg relative">
                     {index < 3 && (
                       <div className="absolute top-3 left-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-black text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 z-10 shadow-md">
                         <TrendingUp className="w-3 h-3" />
                         TOP PICK
                       </div>
                     )}
+                    {/* OPTIMIZATION: Using next/image for optimized images */}
                     <div className="aspect-video bg-muted relative">
-                      <img src={offer.product.image_url} alt={offer.product.name} className="w-full h-full object-cover" />
+                      <Image
+                        src={offer.product.image_url || 'https://placehold.co/600x400'}
+                        alt={offer.product.name}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="object-cover"
+                        loading={index < 2 ? "eager" : "lazy"}
+                      />
                     </div>
                     <div className="p-5">
                       <span className="text-xs font-bold text-blue-500 uppercase">{offer.product.category}</span>

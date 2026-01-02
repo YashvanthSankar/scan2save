@@ -2,9 +2,17 @@
 
 import React from "react";
 
-export function Background() {
+// OPTIMIZATION: Memoized background to prevent unnecessary re-renders
+export const Background = React.memo(function Background() {
     return (
-        <div className="fixed inset-0 overflow-hidden pointer-events-none z-[-1]">
+        <div
+            className="fixed inset-0 overflow-hidden pointer-events-none z-[-1]"
+            style={{
+                // GPU acceleration hint
+                transform: 'translateZ(0)',
+                contain: 'strict',
+            }}
+        >
             {/* Base Gradient */}
             <div className="absolute inset-0 bg-[#030712]" />
 
@@ -17,11 +25,10 @@ export function Background() {
                         radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.10) 0%, transparent 50%),
                         radial-gradient(ellipse at 40% 70%, rgba(16, 185, 129, 0.06) 0%, transparent 40%)
                     `,
-                    willChange: 'transform',
                 }}
             />
 
-            {/* Primary Glowing Orb - Simplified */}
+            {/* Primary Glowing Orb - GPU optimized */}
             <div
                 className="absolute w-[500px] h-[500px] md:w-[700px] md:h-[700px] rounded-full"
                 style={{
@@ -29,7 +36,7 @@ export function Background() {
                     left: '10%',
                     background: 'radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%)',
                     filter: 'blur(60px)',
-                    willChange: 'transform',
+                    transform: 'translateZ(0)',
                 }}
             />
 
@@ -41,7 +48,7 @@ export function Background() {
                     right: '5%',
                     background: 'radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%)',
                     filter: 'blur(80px)',
-                    willChange: 'transform',
+                    transform: 'translateZ(0)',
                 }}
             />
 
@@ -72,4 +79,5 @@ export function Background() {
             <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#030712] to-transparent" />
         </div>
     );
-}
+});
+

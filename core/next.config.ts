@@ -23,9 +23,19 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
   },
 
-  // Optimize package imports for better tree-shaking
+  // OPTIMIZATION: Expanded package imports for better tree-shaking
   experimental: {
-    optimizePackageImports: ['lucide-react'],
+    optimizePackageImports: [
+      'lucide-react',
+      '@supabase/supabase-js',
+      'firebase',
+      'firebase-admin',
+    ],
+    // Cache static pages in client-side router cache for faster navigation
+    staleTimes: {
+      dynamic: 30, // Dynamic pages cached for 30 seconds
+      static: 180, // Static pages cached for 3 minutes
+    },
   },
 
   // Turbopack for fast dev builds

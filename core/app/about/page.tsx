@@ -1,6 +1,10 @@
 import Link from 'next/link';
 import { ArrowLeft, Target, Zap, Heart, Users, Globe, Sparkles, QrCode } from 'lucide-react';
 
+// OPTIMIZATION: Static generation for content page
+export const dynamic = 'force-static';
+export const revalidate = 3600; // Revalidate every hour
+
 export const metadata = {
     title: 'About Us | Scan2Save',
     description: 'Learn about Scan2Save - our mission to transform retail with AI-powered shopping experiences.',

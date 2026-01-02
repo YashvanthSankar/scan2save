@@ -1,6 +1,10 @@
 import Link from 'next/link';
 import { ArrowLeft, Shield, Lock, Eye, Database, Cookie, Users, Mail } from 'lucide-react';
 
+// OPTIMIZATION: Static generation for content page
+export const dynamic = 'force-static';
+export const revalidate = 3600;
+
 export const metadata = {
     title: 'Privacy Policy | Scan2Save',
     description: 'Learn how Scan2Save collects, uses, and protects your personal information.',

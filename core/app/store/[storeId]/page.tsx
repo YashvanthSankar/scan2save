@@ -17,9 +17,10 @@ interface StorePageProps {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-async function getStoreData(storeId: string) {
+// OPTIMIZATION: Single combined function to avoid duplicate store lookups
+async function getStoreWithData(storeId: string, category?: string, query?: string) {
     try {
-        // Try to find by storeId (slug) first, then by id (UUID)
+        // Single store lookup
         const store = await prisma.store.findFirst({
             where: {
                 OR: [
@@ -35,49 +36,47 @@ async function getStoreData(storeId: string) {
                 isActive: true,
             }
         });
-        return store;
-    } catch (error) {
-        console.error('Error fetching store:', error);
-        return null;
-    }
-}
 
-async function getStoreProducts(storeId: string, category?: string, query?: string) {
-    try {
-        const store = await prisma.store.findFirst({
-            where: {
-                OR: [
-                    { storeId: storeId },
-                    { id: storeId }
-                ]
-            },
-            select: { id: true }
-        });
+        if (!store) return null;
 
-        if (!store) return [];
-
-        const products = await prisma.storeProduct.findMany({
-            where: {
-                storeId: store.id,
-                inStock: true,
-                ...(category && {
+        // OPTIMIZATION: Fetch products and categories in parallel using the same store.id
+        const [products, categoryProducts] = await Promise.all([
+            prisma.storeProduct.findMany({
+                where: {
+                    storeId: store.id,
+                    inStock: true,
+                    ...(category && {
+                        product: {
+                            category: { equals: category, mode: 'insensitive' as const }
+                        }
+                    }),
+                    ...(query && {
+                        product: {
+                            name: { contains: query, mode: 'insensitive' as const }
+                        }
+                    })
+                },
+                include: {
+                    product: true
+                },
+                take: 50
+            }),
+            // Get all products for category extraction (lightweight query)
+            prisma.storeProduct.findMany({
+                where: {
+                    storeId: store.id,
+                    inStock: true
+                },
+                select: {
                     product: {
-                        category: { equals: category, mode: 'insensitive' as const }
+                        select: { category: true }
                     }
-                }),
-                ...(query && {
-                    product: {
-                        name: { contains: query, mode: 'insensitive' as const }
-                    }
-                })
-            },
-            include: {
-                product: true
-            },
-            take: 50
-        });
+                },
+                distinct: ['productId']
+            })
+        ]);
 
-        return products.map(sp => ({
+        const formattedProducts = products.map(sp => ({
             id: sp.product.id,
             name: sp.product.name,
             category: sp.product.category,
@@ -87,44 +86,17 @@ async function getStoreProducts(storeId: string, category?: string, query?: stri
             aisle: sp.aisle,
             inStock: sp.inStock
         }));
+
+        const categories = [...new Set(categoryProducts.map(p => p.product.category))];
+
+        return {
+            store,
+            products: formattedProducts,
+            categories
+        };
     } catch (error) {
-        console.error('Error fetching products:', error);
-        return [];
-    }
-}
-
-// OPTIMIZATION: Separate lightweight query for categories only
-async function getStoreCategories(storeId: string): Promise<string[]> {
-    try {
-        const store = await prisma.store.findFirst({
-            where: {
-                OR: [
-                    { storeId: storeId },
-                    { id: storeId }
-                ]
-            },
-            select: { id: true }
-        });
-
-        if (!store) return [];
-
-        const products = await prisma.storeProduct.findMany({
-            where: {
-                storeId: store.id,
-                inStock: true
-            },
-            select: {
-                product: {
-                    select: { category: true }
-                }
-            },
-            distinct: ['productId']
-        });
-
-        return [...new Set(products.map(p => p.product.category))];
-    } catch (error) {
-        console.error('Error fetching categories:', error);
-        return [];
+        console.error('Error fetching store data:', error);
+        return null;
     }
 }
 
@@ -132,18 +104,16 @@ export default async function StoreFront({ params, searchParams }: StorePageProp
     const { storeId } = await params;
     const { q, category } = await searchParams;
 
-    const store = await getStoreData(storeId);
-    if (!store) return notFound();
+    // OPTIMIZATION: Single database round-trip for all store data
+    const data = await getStoreWithData(
+        storeId,
+        typeof category === 'string' ? category : undefined,
+        typeof q === 'string' ? q : undefined
+    );
 
-    // OPTIMIZATION: Fetch products and categories in parallel
-    const [storeProducts, categories] = await Promise.all([
-        getStoreProducts(
-            storeId,
-            typeof category === 'string' ? category : undefined,
-            typeof q === 'string' ? q : undefined
-        ),
-        getStoreCategories(storeId)
-    ]);
+    if (!data) return notFound();
+
+    const { store, products: storeProducts, categories } = data;
 
     return (
         <div className="min-h-screen text-foreground selection:bg-primary/30 font-sans pb-32 relative">

@@ -17,6 +17,10 @@ import {
     Target
 } from 'lucide-react';
 
+// OPTIMIZATION: Static generation for content page
+export const dynamic = 'force-static';
+export const revalidate = 3600;
+
 const features = [
     {
         icon: Brain,

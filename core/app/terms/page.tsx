@@ -1,6 +1,10 @@
 import Link from 'next/link';
 import { ArrowLeft, FileText, CheckCircle, AlertTriangle, CreditCard, Scale, Ban, RefreshCw } from 'lucide-react';
 
+// OPTIMIZATION: Static generation for content page
+export const dynamic = 'force-static';
+export const revalidate = 3600;
+
 export const metadata = {
     title: 'Terms of Service | Scan2Save',
     description: 'Read the terms and conditions for using Scan2Save services.',
