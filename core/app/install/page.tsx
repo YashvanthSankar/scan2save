@@ -5,7 +5,6 @@ import {
     Download,
     Smartphone,
     CheckCircle,
-    AlertCircle,
     Share,
     ArrowLeft,
     Zap,
@@ -13,15 +12,23 @@ import {
     Bell,
     Wifi,
     ScanLine,
-    Loader2
+    Loader2,
+    MoreVertical,
+    Chrome
 } from 'lucide-react';
 import { useInstall } from '@/lib/InstallContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function InstallPage() {
     const { canInstall, isInstalled, isIOS, triggerInstall } = useInstall();
     const [isInstalling, setIsInstalling] = useState(false);
     const [installSuccess, setInstallSuccess] = useState(false);
+    const [isAndroid, setIsAndroid] = useState(false);
+
+    useEffect(() => {
+        // Detect Android
+        setIsAndroid(/Android/i.test(navigator.userAgent));
+    }, []);
 
     const handleInstallClick = async () => {
         setIsInstalling(true);
@@ -86,33 +93,8 @@ export default function InstallPage() {
                                     Open Dashboard
                                 </Link>
                             </div>
-                        ) : isIOS ? (
-                            // iOS Instructions
-                            <div className="text-center">
-                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/20 mb-4">
-                                    <Share className="w-8 h-8 text-blue-400" />
-                                </div>
-                                <h2 className="text-2xl font-bold text-foreground mb-2">Install on iOS</h2>
-                                <p className="text-muted-foreground mb-6">
-                                    To install Scan2Save on your iPhone or iPad:
-                                </p>
-                                <div className="text-left max-w-sm mx-auto space-y-4">
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 text-blue-400 font-bold text-sm">1</div>
-                                        <p className="text-muted-foreground">Tap the <strong className="text-foreground">Share</strong> button <Share className="w-4 h-4 inline text-blue-400" /> in Safari</p>
-                                    </div>
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 text-blue-400 font-bold text-sm">2</div>
-                                        <p className="text-muted-foreground">Scroll down and tap <strong className="text-foreground">"Add to Home Screen"</strong></p>
-                                    </div>
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 text-blue-400 font-bold text-sm">3</div>
-                                        <p className="text-muted-foreground">Tap <strong className="text-foreground">"Add"</strong> to install the app</p>
-                                    </div>
-                                </div>
-                            </div>
                         ) : canInstall ? (
-                            // Install Available State
+                            // Install Available State - Browser supports direct install
                             <div className="text-center">
                                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-500/20 mb-4">
                                     <Download className="w-8 h-8 text-indigo-400" />
@@ -139,33 +121,82 @@ export default function InstallPage() {
                                     )}
                                 </button>
                             </div>
-                        ) : (
-                            // Browser Not Supported State
+                        ) : isIOS ? (
+                            // iOS Instructions
                             <div className="text-center">
-                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/20 mb-4">
-                                    <AlertCircle className="w-8 h-8 text-amber-400" />
+                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/20 mb-4">
+                                    <Share className="w-8 h-8 text-blue-400" />
                                 </div>
-                                <h2 className="text-2xl font-bold text-foreground mb-2">Open in Chrome or Safari</h2>
+                                <h2 className="text-2xl font-bold text-foreground mb-2">Install on iOS</h2>
                                 <p className="text-muted-foreground mb-6">
-                                    To install Scan2Save, please open this page in <strong className="text-foreground">Chrome</strong> (Android/Desktop) or <strong className="text-foreground">Safari</strong> (iOS).
-                                    In-app browsers don't support installation.
+                                    Follow these steps in <strong className="text-foreground">Safari</strong>:
                                 </p>
-                                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                                    <button
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(window.location.origin);
-                                            alert('Link copied! Open it in Chrome or Safari.');
-                                        }}
-                                        className="px-6 py-3 bg-white/5 border border-white/10 text-foreground rounded-xl font-medium hover:bg-white/10 transition-colors"
-                                    >
-                                        Copy Link
-                                    </button>
-                                    <Link
-                                        href="/login"
-                                        className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl font-bold hover:scale-105 transition-transform"
-                                    >
-                                        Continue in Browser
-                                    </Link>
+                                <div className="text-left max-w-sm mx-auto space-y-4">
+                                    <div className="flex items-start gap-4 p-3 bg-white/5 rounded-xl">
+                                        <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 text-blue-400 font-bold text-sm">1</div>
+                                        <p className="text-muted-foreground">Tap the <strong className="text-foreground">Share</strong> button <Share className="w-4 h-4 inline text-blue-400" /> at the bottom of Safari</p>
+                                    </div>
+                                    <div className="flex items-start gap-4 p-3 bg-white/5 rounded-xl">
+                                        <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 text-blue-400 font-bold text-sm">2</div>
+                                        <p className="text-muted-foreground">Scroll down and tap <strong className="text-foreground">"Add to Home Screen"</strong></p>
+                                    </div>
+                                    <div className="flex items-start gap-4 p-3 bg-white/5 rounded-xl">
+                                        <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 text-blue-400 font-bold text-sm">3</div>
+                                        <p className="text-muted-foreground">Tap <strong className="text-foreground">"Add"</strong> in the top right</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : isAndroid ? (
+                            // Android Chrome Instructions (when prompt not available)
+                            <div className="text-center">
+                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/20 mb-4">
+                                    <Chrome className="w-8 h-8 text-green-400" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-foreground mb-2">Install on Android</h2>
+                                <p className="text-muted-foreground mb-6">
+                                    Follow these steps in <strong className="text-foreground">Chrome</strong>:
+                                </p>
+                                <div className="text-left max-w-sm mx-auto space-y-4">
+                                    <div className="flex items-start gap-4 p-3 bg-white/5 rounded-xl">
+                                        <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 text-green-400 font-bold text-sm">1</div>
+                                        <p className="text-muted-foreground">Tap the <strong className="text-foreground">menu</strong> button <MoreVertical className="w-4 h-4 inline text-green-400" /> (three dots) in Chrome</p>
+                                    </div>
+                                    <div className="flex items-start gap-4 p-3 bg-white/5 rounded-xl">
+                                        <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 text-green-400 font-bold text-sm">2</div>
+                                        <p className="text-muted-foreground">Tap <strong className="text-foreground">"Add to Home screen"</strong> or <strong className="text-foreground">"Install app"</strong></p>
+                                    </div>
+                                    <div className="flex items-start gap-4 p-3 bg-white/5 rounded-xl">
+                                        <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 text-green-400 font-bold text-sm">3</div>
+                                        <p className="text-muted-foreground">Tap <strong className="text-foreground">"Install"</strong> to confirm</p>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-6">
+                                    💡 Make sure you're using Chrome and the site is served over HTTPS
+                                </p>
+                            </div>
+                        ) : (
+                            // Desktop Instructions
+                            <div className="text-center">
+                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-violet-500/20 mb-4">
+                                    <Chrome className="w-8 h-8 text-violet-400" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-foreground mb-2">Install on Desktop</h2>
+                                <p className="text-muted-foreground mb-6">
+                                    Follow these steps in <strong className="text-foreground">Chrome</strong> or <strong className="text-foreground">Edge</strong>:
+                                </p>
+                                <div className="text-left max-w-sm mx-auto space-y-4">
+                                    <div className="flex items-start gap-4 p-3 bg-white/5 rounded-xl">
+                                        <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0 text-violet-400 font-bold text-sm">1</div>
+                                        <p className="text-muted-foreground">Look for the <strong className="text-foreground">install icon</strong> <Download className="w-4 h-4 inline text-violet-400" /> in the address bar</p>
+                                    </div>
+                                    <div className="flex items-start gap-4 p-3 bg-white/5 rounded-xl">
+                                        <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0 text-violet-400 font-bold text-sm">2</div>
+                                        <p className="text-muted-foreground">Or click <strong className="text-foreground">⋮ → Install Scan2Save</strong></p>
+                                    </div>
+                                    <div className="flex items-start gap-4 p-3 bg-white/5 rounded-xl">
+                                        <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0 text-violet-400 font-bold text-sm">3</div>
+                                        <p className="text-muted-foreground">Click <strong className="text-foreground">"Install"</strong> to add to your desktop</p>
+                                    </div>
                                 </div>
                             </div>
                         )}
