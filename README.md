@@ -20,6 +20,40 @@ Scan2Save transforms physical retail with adaptive intelligence. Our ML-powered 
 
 ---
 
+## Demo
+
+### Video Walkthrough
+
+▶️ **[Watch the Full Demo](./scan2save%20-%20demo.mp4)**
+
+> A complete walkthrough of the Scan2Save experience — from scanning the store QR to checkout.
+
+---
+
+### App Screenshots
+
+<details open>
+<summary><strong>Click to view the complete user journey</strong></summary>
+
+<br/>
+
+| Step | Screenshot | Description |
+|:----:|:----------:|:------------|
+| **1** | <img src="./screenshots/1_ss.jpeg" width="280"/> | **Landing Page**|
+| **2** | <img src="./screenshots/2_ss.jpeg" width="280"/> | **Install Pop up** |
+| **3** | <img src="./screenshots/3_ss.jpeg" width="280"/> | **Install Button** |
+| **4** | <img src="./screenshots/4_ss.jpeg" width="280"/> | **User Dashboard** |
+| **5** | <img src="./screenshots/5_ss.jpeg" width="280"/> | **Store Page** |
+| **6** | <img src="./screenshots/6_ss.jpeg" width="280"/> | **Shopping Route** |
+| **7** | <img src="./screenshots/7_ss.jpeg" width="280"/> | **Checkout Page** |
+| **8** | <img src="./screenshots/8_ss.jpeg" width="280"/> | **Payment Simulation** |
+| **9** | <img src="./screenshots/9_ss.jpeg" width="280"/> | **Payment Success** |
+| **10** | <img src="./screenshots/10_ss.jpeg" width="280"/> | **Order History** |
+
+</details>
+
+---
+
 ## Architecture Overview
 
 ```
