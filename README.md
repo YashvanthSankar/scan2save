@@ -30,6 +30,23 @@ Scan2Save transforms physical retail with adaptive intelligence. Our ML-powered 
 
 ---
 
+### Demo Credentials
+
+For testing the application:
+
+User:
+| Field | Value |
+|-------|-------|
+| **Phone** | `+91 9696969696` |
+| **OTP** | `000000` |
+
+Admin:
+| Field | Value |
+|-------|-------|
+| **Phone** | `+91 1111111111` |
+| **OTP** | `111111` |
+---
+
 ### App Screenshots
 
 <details open>
@@ -117,15 +134,6 @@ scan2save/
 - Node.js 18+
 - PostgreSQL database (Supabase recommended)
 - Firebase project (for OTP authentication)
-
-### Demo Credentials
-
-For testing the application:
-
-| Field | Value |
-|-------|-------|
-| **Phone** | `+91 9696969696` |
-| **OTP** | `000000` |
 
 ### Installation
 
