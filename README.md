@@ -24,7 +24,7 @@ Scan2Save transforms physical retail with adaptive intelligence. Our ML-powered 
 
 ### Video Walkthrough
 
-▶️ **[Watch the Full Demo](./scan2save%20-%20demo.mp4)**
+▶️ **[Watch the Full Demo on YouTube](https://youtu.be/e-yrD4sy7Gk)**
 
 > A complete walkthrough of the Scan2Save experience — from scanning the store QR to checkout.
 
