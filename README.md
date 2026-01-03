@@ -267,7 +267,17 @@ Real-time recommendation engine analyzes:
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+⚠️ **Proprietary License - All Rights Reserved**
+
+This project is **NOT open source**. You may view this code for educational purposes only.
+
+**You may NOT:**
+- Copy, reproduce, or duplicate any portion of this code
+- Modify or create derivative works
+- Use this code in any other project
+- Distribute or share this code
+
+See [LICENSE](LICENSE) for full terms.
 
 ---
 
